@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONIOENCODING=utf-8 python -c \":*)",
+      "Bash(find C:/Users/featuer/Desktop/pvad-se-pipeline -type f -name *.onnx)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:ar5iv.labs.arxiv.org)",
+      "Bash(python -c \":*)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_parallel_pipeline.py)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_v3_comparison.py)",
+      "Read(//c/Users/featuer/Desktop/VOICE/MAT/**)",
+      "Bash(ls -la *.wav)",
+      "Bash(PYTHONIOENCODING=utf-8 python test_model_comparison.py)",
+      "Bash(PYTHONIOENCODING=utf-8 timeout 8 python demo_web.py)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(pip list:*)",
+      "Bash(pip install:*)",
+      "Bash(python test_parallel_pipeline.py)",
+      "Bash(curl -s http://localhost:8765/)",
+      "Bash(python test_baseline_comparison.py)",
+      "Bash(python -m markitdown ~/Desktop/pvad-se-pipeline/test_parallel/pvad_pipeline_v3_report_zh.pptx)",
+      "Bash(find /c/Users/featuer/Desktop/pvad-se-pipeline -type f \\\\\\(-name *.pth -o -name *.pt -o -name *.onnx -o -name *.onnx.data -o -name *.ckpt -o -name *.wav -o -name *.mp3 -o -name *.flac \\\\\\))",
+      "Bash(sort -k5 -h -r)"
+    ]
+  }
+}

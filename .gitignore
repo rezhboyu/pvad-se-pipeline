@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Model weights (binary, often large)
+*.pth
+*.pt
+*.onnx
+*.onnx.data
+*.ckpt
+*.bin
+*.safetensors
+*.pb
+models/
+
+# Audio files (test data / demo)
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs & temp
+*.log
+*.tmp
+*.cache
+
+# Test output directories (generated data)
+test_audio/
+test_mixed/
+test_mixed_v2/
+test_parallel/
+test_ablation/
+test_personal_vad/
+test_robust_pvad/
+test_model_compare/
+test_v3_compare/
+se_comparison/
+se_evaluation/audio/
+profiles/

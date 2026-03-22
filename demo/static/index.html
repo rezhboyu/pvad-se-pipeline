@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pVAD-SE Pipeline Demo</title>
+<style>
+  :root {
+    --bg: #0F1B2D;
+    --card: #1A2740;
+    --teal: #14B8A6;
+    --teal-dark: #0D9488;
+    --green: #22C55E;
+    --red: #EF4444;
+    --orange: #F59E0B;
+    --white: #E2E8F0;
+    --muted: #94A3B8;
+    --border: #2A3A50;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--white);
+    min-height: 100vh;
+  }
+  .header {
+    background: linear-gradient(135deg, #0D9488, #065A82);
+    padding: 1.5rem 2rem;
+    text-align: center;
+  }
+  .header h1 { font-size: 1.6rem; font-weight: 700; }
+  .header p { color: #B2F5EA; font-size: 0.85rem; margin-top: 0.3rem; }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.2rem;
+  }
+  .card h2 {
+    font-size: 1rem;
+    color: var(--teal);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h2 .step {
+    background: var(--teal-dark);
+    color: white;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700;
+  }
+
+  .btn {
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-teal { background: var(--teal); color: white; }
+  .btn-teal:hover:not(:disabled) { background: var(--teal-dark); }
+  .btn-red { background: var(--red); color: white; }
+  .btn-red:hover:not(:disabled) { background: #DC2626; }
+  .btn-green { background: var(--green); color: white; }
+  .btn-green:hover:not(:disabled) { background: #16A34A; }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .status-idle { background: #1E2F4A; color: var(--muted); }
+  .status-enrolled { background: #1A3A2A; color: var(--green); }
+  .status-streaming { background: #3A2A1A; color: var(--orange); }
+  .status-target { background: #1A3A2A; color: var(--green); }
+  .status-nontarget { background: #3A1A1A; color: var(--red); }
+
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .dot-idle { background: var(--muted); }
+  .dot-green { background: var(--green); }
+  .dot-orange { background: var(--orange); animation: pulse 1s infinite; }
+  .dot-red { background: var(--red); }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .controls { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+
+  .waveform-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    background: #0A1220;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  canvas { width: 100%; height: 100%; display: block; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+  .stat-box {
+    background: #0F1B2D;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    text-align: center;
+  }
+  .stat-value { font-size: 1.5rem; font-weight: 700; }
+  .stat-label { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
+  .enroll-area {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .enroll-area input[type="file"] { display: none; }
+  .enroll-info { font-size: 0.8rem; color: var(--muted); margin-top: 0.5rem; }
+
+  .sim-bar-container {
+    width: 100%;
+    height: 24px;
+    background: #0A1220;
+    border-radius: 4px;
+    position: relative;
+    margin-top: 0.5rem;
+    border: 1px solid var(--border);
+  }
+  .sim-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.15s, background 0.15s;
+  }
+  .sim-threshold {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--orange);
+    z-index: 2;
+  }
+  .sim-threshold-label {
+    position: absolute;
+    top: -16px;
+    font-size: 0.65rem;
+    color: var(--orange);
+    transform: translateX(-50%);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>pVAD-SE Pipeline Demo</h1>
+  <p>Personal Voice Activity Detection + Speech Enhancement | Real-time Streaming</p>
+</div>
+
+<div class="container">
+  <!-- Step 1: Enroll -->
+  <div class="card">
+    <h2><span class="step">1</span> 註冊目標說話者</h2>
+    <div class="enroll-area">
+      <button class="btn btn-teal" id="btnEnrollRec" onclick="toggleEnrollRec()">錄音註冊</button>
+      <button class="btn btn-teal" onclick="document.getElementById('fileInput').click()">上傳音檔</button>
+      <input type="file" id="fileInput" accept="audio/*" onchange="enrollFile(this.files[0])">
+      <span class="status status-idle" id="enrollStatus">
+        <span class="dot dot-idle"></span> 未註冊
+      </span>
+    </div>
+    <div class="enroll-info" id="enrollInfo"></div>
+  </div>
+
+  <!-- Step 2: Stream -->
+  <div class="card">
+    <h2><span class="step">2</span> 即時串流處理</h2>
+    <div class="controls">
+      <button class="btn btn-green" id="btnStart" onclick="startStream()" disabled>開始串流</button>
+      <button class="btn btn-red" id="btnStop" onclick="stopStream()" disabled>停止</button>
+      <span class="status status-idle" id="streamStatus">
+        <span class="dot dot-idle"></span> 待命
+      </span>
+      <span class="status" id="targetStatus" style="display:none">
+        <span class="dot" id="targetDot"></span>
+        <span id="targetLabel"></span>
+      </span>
+    </div>
+
+    <!-- Similarity bar -->
+    <div style="margin-top:1rem">
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.3rem">Cosine Similarity</div>
+      <div class="sim-bar-container">
+        <div class="sim-threshold" style="left:25%">
+          <span class="sim-threshold-label">Threshold 0.25</span>
+        </div>
+        <div class="sim-bar" id="simBar" style="width:0%; background:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Output waveform -->
+    <div style="margin-top:1rem">
+      <div style="font-size:0.75rem; color:var(--muted); margin-bottom:0.3rem">Output Waveform (filtered)</div>
+      <div class="waveform-container">
+        <canvas id="waveCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-value" id="statSim" style="color:var(--muted)">0.000</div>
+        <div class="stat-label">Similarity (EMA)</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statTarget" style="color:var(--muted)">--</div>
+        <div class="stat-label">判定結果</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="statFrames" style="color:var(--muted)">0</div>
+        <div class="stat-label">已處理幀數</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAMPLE_RATE = 16000;
+const BUFFER_SIZE = 2048;
+
+let ws = null;
+let audioCtx = null;
+let mediaStream = null;
+let workletNode = null;
+let isStreaming = false;
+let frameCount = 0;
+
+// Enrollment recording
+let enrollRecording = false;
+let enrollChunks = [];
+let enrollMediaRec = null;
+
+// Waveform ring buffer
+const WAVE_LEN = 3000;
+let waveBuffer = new Float32Array(WAVE_LEN);
+let waveIdx = 0;
+
+// ── Enrollment ──
+async function toggleEnrollRec() {
+  const btn = document.getElementById('btnEnrollRec');
+  if (!enrollRecording) {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { sampleRate: SAMPLE_RATE, channelCount: 1, echoCancellation: false, noiseSuppression: false }
+    });
+    enrollChunks = [];
+    enrollMediaRec = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+    enrollMediaRec.ondataavailable = e => enrollChunks.push(e.data);
+    enrollMediaRec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(enrollChunks, { type: 'audio/webm' });
+      await uploadEnrollment(blob, 'enroll.webm');
+    };
+    enrollMediaRec.start();
+    enrollRecording = true;
+    btn.textContent = '停止錄音';
+    btn.className = 'btn btn-red';
+    setEnrollStatus('recording', '錄音中...');
+  } else {
+    enrollMediaRec.stop();
+    enrollRecording = false;
+    btn.textContent = '錄音註冊';
+    btn.className = 'btn btn-teal';
+  }
+}
+
+async function enrollFile(file) {
+  if (!file) return;
+  await uploadEnrollment(file, file.name);
+}
+
+async function uploadEnrollment(blob, filename) {
+  setEnrollStatus('uploading', '上傳中...');
+  const form = new FormData();
+  form.append('file', blob, filename);
+  try {
+    const res = await fetch('/api/enroll', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.status === 'ok') {
+      setEnrollStatus('enrolled', '已註冊 (' + data.duration + 's, RMS=' + data.rms + ')');
+      document.getElementById('btnStart').disabled = false;
+    } else {
+      setEnrollStatus('error', data.error || '註冊失敗');
+    }
+  } catch (e) {
+    setEnrollStatus('error', e.message);
+  }
+}
+
+function setEnrollStatus(state, text) {
+  const el = document.getElementById('enrollStatus');
+  const info = document.getElementById('enrollInfo');
+  if (state === 'enrolled') {
+    el.innerHTML = '<span class="dot dot-green"></span> 已註冊';
+    el.className = 'status status-enrolled';
+    info.textContent = text;
+  } else if (state === 'recording') {
+    el.innerHTML = '<span class="dot dot-orange"></span> 錄音中';
+    el.className = 'status status-streaming';
+    info.textContent = '';
+  } else {
+    el.innerHTML = '<span class="dot dot-idle"></span> ' + text;
+    el.className = 'status status-idle';
+    info.textContent = '';
+  }
+}
+
+// ── Streaming ──
+async function startStream() {
+  if (isStreaming) return;
+
+  audioCtx = new AudioContext({ sampleRate: SAMPLE_RATE });
+
+  mediaStream = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      sampleRate: SAMPLE_RATE,
+      channelCount: 1,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+    }
+  });
+
+  const source = audioCtx.createMediaStreamSource(mediaStream);
+
+  // Use ScriptProcessorNode (deprecated but widely supported)
+  const scriptNode = audioCtx.createScriptProcessor(BUFFER_SIZE, 1, 1);
+
+  // Connect WebSocket
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  ws = new WebSocket(proto + '://' + location.host + '/ws/stream');
+  ws.binaryType = 'arraybuffer';
+
+  ws.onopen = () => {
+    isStreaming = true;
+    frameCount = 0;
+    waveBuffer.fill(0);
+    waveIdx = 0;
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    document.getElementById('streamStatus').innerHTML = '<span class="dot dot-orange"></span> 串流中';
+    document.getElementById('streamStatus').className = 'status status-streaming';
+    document.getElementById('targetStatus').style.display = 'inline-flex';
+  };
+
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.error) {
+      console.error('Server error:', msg.error);
+      alert('Server: ' + msg.error);
+      stopStream();
+      return;
+    }
+
+    // Update waveform buffer
+    const output = msg.output;
+    for (let i = 0; i < output.length; i++) {
+      waveBuffer[waveIdx % WAVE_LEN] = output[i];
+      waveIdx++;
+    }
+    frameCount += output.length;
+
+    updateStats(msg);
+  };
+
+  ws.onclose = () => { if (isStreaming) stopStream(); };
+  ws.onerror = () => { stopStream(); };
+
+  // Send mic audio as int16 PCM
+  scriptNode.onaudioprocess = (e) => {
+    if (!isStreaming || !ws || ws.readyState !== WebSocket.OPEN) return;
+    const input = e.inputBuffer.getChannelData(0);
+    const int16 = new Int16Array(input.length);
+    for (let i = 0; i < input.length; i++) {
+      int16[i] = Math.max(-32768, Math.min(32767, Math.round(input[i] * 32768)));
+    }
+    ws.send(int16.buffer);
+  };
+
+  // Need to connect to destination for onaudioprocess to fire
+  source.connect(scriptNode);
+  scriptNode.connect(audioCtx.destination);
+
+  workletNode = scriptNode; // store ref for cleanup
+  drawLoop();
+}
+
+function stopStream() {
+  isStreaming = false;
+  if (ws) { try { ws.close(); } catch(e) {} ws = null; }
+  if (workletNode) { workletNode.disconnect(); workletNode = null; }
+  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  if (audioCtx) { audioCtx.close(); audioCtx = null; }
+
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+  document.getElementById('streamStatus').innerHTML = '<span class="dot dot-idle"></span> 已停止';
+  document.getElementById('streamStatus').className = 'status status-idle';
+  document.getElementById('targetStatus').style.display = 'none';
+}
+
+function updateStats(msg) {
+  const sim = msg.confidence;
+  const isTarget = msg.is_target;
+
+  // Sim number
+  const statSim = document.getElementById('statSim');
+  statSim.textContent = sim.toFixed(3);
+  statSim.style.color = isTarget ? 'var(--green)' : 'var(--red)';
+
+  // Target
+  const statTarget = document.getElementById('statTarget');
+  statTarget.textContent = isTarget ? '目標' : '非目標';
+  statTarget.style.color = isTarget ? 'var(--green)' : 'var(--red)';
+
+  // Badge
+  const targetDot = document.getElementById('targetDot');
+  const targetLabel = document.getElementById('targetLabel');
+  const targetStatus = document.getElementById('targetStatus');
+  if (isTarget) {
+    targetDot.className = 'dot dot-green';
+    targetLabel.textContent = '目標說話者';
+    targetStatus.className = 'status status-target';
+  } else {
+    targetDot.className = 'dot dot-red';
+    targetLabel.textContent = '非目標';
+    targetStatus.className = 'status status-nontarget';
+  }
+
+  // Frames
+  document.getElementById('statFrames').textContent = frameCount.toLocaleString();
+
+  // Sim bar
+  const bar = document.getElementById('simBar');
+  const pct = Math.min(100, Math.max(0, sim * 100));
+  bar.style.width = pct + '%';
+  bar.style.background = isTarget ? 'var(--green)' : 'var(--red)';
+}
+
+// ── Waveform Drawing ──
+function drawWaveform() {
+  const canvas = document.getElementById('waveCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth * dpr;
+  const H = canvas.clientHeight * dpr;
+  canvas.width = W;
+  canvas.height = H;
+  const midY = H / 2;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = '#1A2740';
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 8; i++) {
+    const y = (H / 8) * i;
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Center line
+  ctx.strokeStyle = '#2A3A50';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, midY);
+  ctx.lineTo(W, midY);
+  ctx.stroke();
+
+  // Waveform - glow
+  ctx.strokeStyle = 'rgba(20, 184, 166, 0.25)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  for (let x = 0; x < W; x++) {
+    const bufIdx = Math.floor(x / W * WAVE_LEN);
+    const realIdx = ((waveIdx - WAVE_LEN + bufIdx) % WAVE_LEN + WAVE_LEN) % WAVE_LEN;
+    const val = waveBuffer[realIdx];
+    const y = midY - val * midY * 0.85;
+    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Waveform - main line
+  ctx.strokeStyle = '#14B8A6';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  for (let x = 0; x < W; x++) {
+    const bufIdx = Math.floor(x / W * WAVE_LEN);
+    const realIdx = ((waveIdx - WAVE_LEN + bufIdx) % WAVE_LEN + WAVE_LEN) % WAVE_LEN;
+    const val = waveBuffer[realIdx];
+    const y = midY - val * midY * 0.85;
+    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+}
+
+function drawLoop() {
+  if (!isStreaming) return;
+  drawWaveform();
+  requestAnimationFrame(drawLoop);
+}
+</script>
+</body>
+</html>

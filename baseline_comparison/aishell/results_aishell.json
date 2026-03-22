@@ -1,0 +1,562 @@
+{
+  "S0140": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.29447852760660914,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "MLP": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.33333333333333265,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.1799591002030972,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.2883435582817731,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.23312883435463713,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "KNN": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.5005117707267145,
+      "n_positive": 3,
+      "n_negative": 489
+    }
+  },
+  "S0599": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.03476482617622283,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "MLP": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.3149284253561524,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.0020449897752924085,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9959349593495935,
+      "precision": 1.0,
+      "recall": 0.3333333333333333,
+      "f1": 0.5,
+      "eer": 0.0,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9979674796747967,
+      "precision": 1.0,
+      "recall": 0.6666666666666666,
+      "f1": 0.8,
+      "eer": 0.0,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "KNN": {
+      "accuracy": 0.9959349593495935,
+      "precision": 1.0,
+      "recall": 0.3333333333333333,
+      "f1": 0.5,
+      "eer": 0.2507692307692317,
+      "n_positive": 3,
+      "n_negative": 489
+    }
+  },
+  "S0182": {
+    "Cosine Similarity": {
+      "accuracy": 0.9939024390243902,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "eer": 0.19877049180233594,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "MLP": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.2499999999996142,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-RBF": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.04098360655777884,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.6666666666666666,
+      "recall": 0.5,
+      "f1": 0.5714285714285714,
+      "eer": 0.0040983606568024385,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.75,
+      "recall": 0.75,
+      "f1": 0.75,
+      "eer": 0.0040983606563834915,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "KNN": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.3333333333333333,
+      "recall": 0.25,
+      "f1": 0.2857142857142857,
+      "eer": 0.3393602225314029,
+      "n_positive": 4,
+      "n_negative": 488
+    }
+  },
+  "S0045": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.5,
+      "recall": 0.25,
+      "f1": 0.3333333333333333,
+      "eer": 0.06147540983712488,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "MLP": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.23155737704889562,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-RBF": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.08811475409989597,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9939024390243902,
+      "precision": 1.0,
+      "recall": 0.25,
+      "f1": 0.4,
+      "eer": 0.10860655737732729,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "Logistic Regression": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.5,
+      "recall": 0.25,
+      "f1": 0.3333333333333333,
+      "eer": 0.06557377049237655,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "KNN": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.43058823529411766,
+      "n_positive": 4,
+      "n_negative": 488
+    }
+  },
+  "S0191": {
+    "Cosine Similarity": {
+      "accuracy": 0.9878048780487805,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.13292433537870585,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "MLP": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.33333333333333337,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.17586912065422813,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-Linear": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.10429447852814568,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.14928425357975755,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "KNN": {
+      "accuracy": 0.983739837398374,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.5046439628482972,
+      "n_positive": 3,
+      "n_negative": 489
+    }
+  },
+  "S0703": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.024539877300961705,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "MLP": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.3333333333333338,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.006134969325734224,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.0,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.6666666666666666,
+      "recall": 0.6666666666666666,
+      "f1": 0.6666666666666666,
+      "eer": 0.004089979551098423,
+      "n_positive": 3,
+      "n_negative": 489
+    },
+    "KNN": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.5005117707267145,
+      "n_positive": 3,
+      "n_negative": 489
+    }
+  },
+  "S0167": {
+    "Cosine Similarity": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6666666666666666,
+      "eer": 0.0,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "MLP": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.026530612245106576,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.0,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9979674796747967,
+      "precision": 1.0,
+      "recall": 0.5,
+      "f1": 0.6666666666666666,
+      "eer": 0.0,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "Logistic Regression": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "eer": 0.0,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "KNN": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "eer": 0.0,
+      "n_positive": 2,
+      "n_negative": 490
+    }
+  },
+  "S0338": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.17827868852385467,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "MLP": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.25000000000013267,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-RBF": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.2500000000000025,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.23975409835967249,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "Logistic Regression": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.5,
+      "recall": 0.25,
+      "f1": 0.3333333333333333,
+      "eer": 0.2377049180325481,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "KNN": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.3412587412587413,
+      "n_positive": 4,
+      "n_negative": 488
+    }
+  },
+  "S0702": {
+    "Cosine Similarity": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.06734693877551985,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "MLP": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.4326530612241372,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "SVM-RBF": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.1571428571429476,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.15306122449085288,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.07142857142992255,
+      "n_positive": 2,
+      "n_negative": 490
+    },
+    "KNN": {
+      "accuracy": 0.9959349593495935,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.5,
+      "n_positive": 2,
+      "n_negative": 490
+    }
+  },
+  "S0114": {
+    "Cosine Similarity": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.3333333333333333,
+      "recall": 0.25,
+      "f1": 0.2857142857142857,
+      "eer": 0.07786885245914774,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "MLP": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.25,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-RBF": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.010245901639444431,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "SVM-Linear": {
+      "accuracy": 0.9898373983739838,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.018442622951575567,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "Logistic Regression": {
+      "accuracy": 0.9939024390243902,
+      "precision": 0.6666666666666666,
+      "recall": 0.5,
+      "f1": 0.5714285714285714,
+      "eer": 0.016393442624255676,
+      "n_positive": 4,
+      "n_negative": 488
+    },
+    "KNN": {
+      "accuracy": 0.991869918699187,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "eer": 0.5005128205128205,
+      "n_positive": 4,
+      "n_negative": 488
+    }
+  }
+}

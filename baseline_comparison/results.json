@@ -1,0 +1,65 @@
+{
+  "Cosine Similarity": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.8798269033432007
+  },
+  "MLP": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.998854398727417
+  },
+  "SVM-RBF": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.8057311878835335
+  },
+  "SVM-Linear": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.8769696733627251
+  },
+  "Logistic Regression": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.9937127828311113
+  },
+  "KNN (K=3)": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 1.0
+  },
+  "LDA (PLDA替代)": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "auc": 1.0,
+    "eer": 0.0,
+    "eer_threshold": 0.9229126572608948
+  }
+}

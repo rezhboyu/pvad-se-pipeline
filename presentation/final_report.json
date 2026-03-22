@@ -1,0 +1,703 @@
+{
+  "experiment": "Speaker-Dependent multi-architecture (noise-augmented) vs pVAD-SE",
+  "date": "2026-03-22",
+  "training": {
+    "data": "hsuan + 0911 + FEMH (MAT)",
+    "augmentation": "SNR 5/10/15/20 dB",
+    "features": "45-dim SDMFCC"
+  },
+  "models": {
+    "MLP": {
+      "val_accuracy": 0.952,
+      "params": 53954,
+      "accuracy": 0.7239,
+      "precision": 0.9773,
+      "recall": 0.5527,
+      "f1": 0.7061,
+      "confusion_matrix": {
+        "tp": 388,
+        "fn": 314,
+        "fp": 9,
+        "tn": 459
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0385,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5256,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.3077,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.9462,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.557,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9872,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.3718,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0769,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5256,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.3077,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    },
+    "BiGRU_Attn": {
+      "val_accuracy": 0.9561,
+      "params": 695042,
+      "accuracy": 0.7197,
+      "precision": 0.977,
+      "recall": 0.5456,
+      "f1": 0.7002,
+      "confusion_matrix": {
+        "tp": 383,
+        "fn": 319,
+        "fp": 9,
+        "tn": 459
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5256,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.3077,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.8925,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.5443,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9872,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0256,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0641,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5256,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.3077,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    },
+    "BiLSTM": {
+      "val_accuracy": 0.9585,
+      "params": 574978,
+      "accuracy": 0.7179,
+      "precision": 0.9794,
+      "recall": 0.5413,
+      "f1": 0.6972,
+      "confusion_matrix": {
+        "tp": 380,
+        "fn": 322,
+        "fp": 8,
+        "tn": 460
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9231,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0128,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.2821,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.914,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.519,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9872,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.3718,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.1026,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9231,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0385,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.5,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.2821,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    },
+    "LinearSVM": {
+      "val_accuracy": 0.7488,
+      "params": "N/A",
+      "accuracy": 0.6658,
+      "precision": 0.8997,
+      "recall": 0.4986,
+      "f1": 0.6416,
+      "confusion_matrix": {
+        "tp": 350,
+        "fn": 352,
+        "fp": 39,
+        "tn": 429
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9487,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4231,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.1026,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9615,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.914,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.443,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9487,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.3462,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.2692,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.3333,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9487,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4103,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.1026,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    },
+    "RF": {
+      "val_accuracy": 0.8883,
+      "params": "N/A",
+      "accuracy": 0.6769,
+      "precision": 0.9765,
+      "recall": 0.4729,
+      "f1": 0.6372,
+      "confusion_matrix": {
+        "tp": 332,
+        "fn": 370,
+        "fp": 8,
+        "tn": 460
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4487,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0769,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.8925,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.443,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9103,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.3205,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.1026,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4487,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0769,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    },
+    "CNN": {
+      "val_accuracy": 0.8675,
+      "params": 125058,
+      "accuracy": 0.6624,
+      "precision": 0.9582,
+      "recall": 0.4573,
+      "f1": 0.6191,
+      "confusion_matrix": {
+        "tp": 321,
+        "fn": 381,
+        "fp": 14,
+        "tn": 454
+      },
+      "per_scenario": {
+        "scenario_a": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0641,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4231,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0897,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_b": {
+          "hsuan_only_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "hsuan+interferer_2.5-5.5s": {
+            "target_ratio": 0.9032,
+            "is_target": true,
+            "n_frames": 93
+          },
+          "hsuan_only_5.5-8.0s": {
+            "target_ratio": 0.443,
+            "is_target": true,
+            "n_frames": 79
+          }
+        },
+        "scenario_c": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.8718,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0513,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.3077,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0256,
+            "is_target": true,
+            "n_frames": 78
+          }
+        },
+        "scenario_d": {
+          "hsuan_0.0-2.5s": {
+            "target_ratio": 0.9359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_2.5-5.0s": {
+            "target_ratio": 0.0385,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_5.0-7.5s": {
+            "target_ratio": 0.4359,
+            "is_target": true,
+            "n_frames": 78
+          },
+          "interferer_7.5-10.0s": {
+            "target_ratio": 0.0256,
+            "is_target": false,
+            "n_frames": 78
+          },
+          "hsuan_10.0-12.5s": {
+            "target_ratio": 0.0897,
+            "is_target": true,
+            "n_frames": 78
+          }
+        }
+      }
+    }
+  },
+  "pvad_se": {
+    "accuracy": 0.65,
+    "precision": 0.768,
+    "recall": 0.598,
+    "f1": 0.672,
+    "params": "6.9M+83K",
+    "rtf": 0.253
+  }
+}

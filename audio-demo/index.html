@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PVAD-SE Pipeline 音頻展示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, "Microsoft JhengHei", sans-serif; background: #f5f5f5; color: #333; padding: 2rem; max-width: 960px; margin: 0 auto; }
+  h1 { text-align: center; margin-bottom: .3rem; font-size: 1.8rem; }
+  .subtitle { text-align: center; color: #888; margin-bottom: 2rem; font-size: .9rem; }
+  .section { background: #fff; border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .section h2 { font-size: 1.2rem; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 2px solid; }
+  .section.original h2 { border-color: #4caf50; color: #2e7d32; }
+  .section.mixed h2    { border-color: #ff9800; color: #e65100; }
+  .section.output h2   { border-color: #2196f3; color: #1565c0; }
+  .section.mat h2      { border-color: #9c27b0; color: #6a1b9a; }
+  .audio-row { display: flex; align-items: center; gap: 1rem; padding: .6rem 0; border-bottom: 1px solid #eee; }
+  .audio-row:last-child { border-bottom: none; }
+  .audio-label { min-width: 180px; font-size: .85rem; word-break: break-all; }
+  audio { flex: 1; height: 36px; }
+  .tag { display: inline-block; font-size: .7rem; padding: 2px 8px; border-radius: 10px; color: #fff; margin-left: .5rem; vertical-align: middle; }
+  .tag-speaker { background: #7c4dff; }
+  .tag-ch { background: #00897b; }
+  footer { text-align: center; color: #aaa; font-size: .8rem; margin-top: 2rem; }
+</style>
+</head>
+<body>
+
+<h1>PVAD-SE Pipeline 音頻展示</h1>
+<p class="subtitle">Personal Voice Activity Detection &amp; Speech Enhancement</p>
+
+<!-- Pipeline 核心三檔 -->
+<div class="section original">
+  <h2>原始音頻（Enrollment）</h2>
+  <div class="audio-row">
+    <span class="audio-label">enrollment.wav</span>
+    <audio controls preload="metadata" src="audio/pipeline/enrollment.wav"></audio>
+  </div>
+</div>
+
+<div class="section mixed">
+  <h2>混合音頻（Mixed）</h2>
+  <div class="audio-row">
+    <span class="audio-label">mixed.wav</span>
+    <audio controls preload="metadata" src="audio/pipeline/mixed.wav"></audio>
+  </div>
+</div>
+
+<div class="section output">
+  <h2>輸出音頻（Output）</h2>
+  <div class="audio-row">
+    <span class="audio-label">output.wav</span>
+    <audio controls preload="metadata" src="audio/pipeline/output.wav"></audio>
+  </div>
+</div>
+
+<!-- MAT 原始錄音 -->
+<div class="section mat">
+  <h2>MAT 原始錄音素材</h2>
+  <div class="audio-row">
+    <span class="audio-label">275eaceb…_hsuan_7 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/275eaceb-2387-4f9e-aef5-1e9996b8f024_hsuan_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">5e4564bd…_0911636193_7 <span class="tag tag-speaker">0911636193</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/5e4564bd-c932-4391-bbc9-e01981d98ab9_0911636193_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">67e84de3…_hsuan_2 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch2</span></span>
+    <audio controls preload="metadata" src="audio/mat/67e84de3-84e4-4327-b2e3-51f0f8341131_hsuan_2.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">67e84de3…_hsuan_7 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/67e84de3-84e4-4327-b2e3-51f0f8341131_hsuan_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">a87d4bab…_hsuan_2 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch2</span></span>
+    <audio controls preload="metadata" src="audio/mat/a87d4bab-a1ed-4268-b6b2-335fafcf29a0_hsuan_2.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">a87d4bab…_hsuan_7 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/a87d4bab-a1ed-4268-b6b2-335fafcf29a0_hsuan_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">b3d6f6b9…_0911636193_7 <span class="tag tag-speaker">0911636193</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/b3d6f6b9-f3b3-4a7b-8791-59e92cd4bade_0911636193_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">b6dbc0fc…_hsuan_7 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/b6dbc0fc-1d57-4647-aa85-54f9bea08743_hsuan_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">ed7139c8…_hsuan_2 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch2</span></span>
+    <audio controls preload="metadata" src="audio/mat/ed7139c8-63e4-4b93-8c63-951a9a93326e_hsuan_2.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">ed7139c8…_hsuan_7 <span class="tag tag-speaker">hsuan</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/ed7139c8-63e4-4b93-8c63-951a9a93326e_hsuan_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">ef81890f…_FEMH_2 <span class="tag tag-speaker">FEMH</span><span class="tag tag-ch">ch2</span></span>
+    <audio controls preload="metadata" src="audio/mat/ef81890f-791f-45c5-925a-2e7931a8f3c6_FEMH_2.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">ef81890f…_FEMH_7 <span class="tag tag-speaker">FEMH</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/ef81890f-791f-45c5-925a-2e7931a8f3c6_FEMH_7.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <span class="audio-label">ffee3849…_0911636193_7 <span class="tag tag-speaker">0911636193</span><span class="tag tag-ch">ch7</span></span>
+    <audio controls preload="metadata" src="audio/mat/ffee3849-48fa-49a8-b5fd-15c8e2a7fadd_0911636193_7.wav"></audio>
+  </div>
+</div>
+
+<footer>PVAD-SE Audio Demo Server</footer>
+</body>
+</html>
