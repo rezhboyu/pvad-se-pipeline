@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PVAD-SE newval_v3 評估報告</title>
+<title>PVAD-SE newval_v3 評估報告 (CAM++)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box }
@@ -39,30 +39,30 @@ footer { text-align:center; padding:2rem; color:#aaa; font-size:.78rem }
 </head>
 <body>
 <header>
-  <h1>PVAD-SE Pipeline — newval_v3 評估報告</h1>
+  <h1>PVAD-SE Pipeline — newval_v3 評估報告 (CAM++)</h1>
   <p>Speakers 4 &amp; 7 &middot; 混音比例 0.3~1.5 &middot; 環境噪音 classroom &middot;
-     Threshold 0.25 &middot; 2026-05-15 00:39</p>
+     Threshold 0.25 &middot; Speaker Encoder: CAM++ (192-dim) &middot; 2026-05-15 01:53</p>
 </header>
 
 <div class="wrap">
 
 <!-- KPI -->
 <div class="kpi">
-  <div class="card"><div class="val">0.002</div><div class="lbl">平均 F1</div></div>
-  <div class="card"><div class="val">0.438</div><div class="lbl">平均 Precision</div></div>
-  <div class="card"><div class="val">0.001</div><div class="lbl">平均 Recall</div></div>
-  <div class="card"><div class="val">10.6x</div><div class="lbl">平均 RTF (CPU only)</div></div>
+  <div class="card"><div class="val">0.074</div><div class="lbl">平均 F1</div></div>
+  <div class="card"><div class="val">0.254</div><div class="lbl">平均 Precision</div></div>
+  <div class="card"><div class="val">0.043</div><div class="lbl">平均 Recall</div></div>
+  <div class="card"><div class="val">2.3x</div><div class="lbl">平均 RTF (CPU only)</div></div>
 </div>
 
 <!-- Observations -->
 <div class="obs">
   <h3>&#9888; 觀察與分析</h3>
   <ul>
-    <li><b>Mean Sim 偏低（0.09~0.12 vs threshold=0.25）</b>：pipeline 幾乎不預測目標說話者，Recall ≈ 0</li>
-    <li><b>Session mismatch</b>：enrollment 為 session-1/2，test 音檔為 session-7；不同錄音環境導致 d-vector 距離增大</li>
-    <li><b>建議調低 threshold</b>：改為 0.05~0.10 可改善 Recall，或改用 personal_vad.onnx（LSTM 逐幀判斷，不依賴 d-vector 距離）</li>
-    <li><b>SNR=1.0 表現最差</b>：噪音與說話者等響（0 dB），pipeline 完全無法辨識目標說話者</li>
-    <li><b>RTF 7~16x（CPU）</b>：WeSpeaker ResNet34 每幀提取 embedding 計算量大；離線用途可接受，即時需 GPU</li>
+    <li><b>CAM++ 大幅改善 RTF（2.2~2.5x vs 舊版 7~16x）</b>：推論速度提升 3~6 倍，CPU 離線用途已可接受</li>
+    <li><b>Speaker 4 F1 顯著提升（0.114~0.201）</b>：CAM++ 對 spk4 的 session mismatch 容忍度更高，但 Recall 仍偏低（0.07~0.12）</li>
+    <li><b>Speaker 7 完全失效（Mean Sim 0.008~0.013）</b>：spk7 的 session-2（enrollment）與 session-7（test）聲學差異極大，CAM++ 也無法橋接</li>
+    <li><b>建議：spk7 需用同 session 音檔做 enrollment</b>，或擴充 enrollment 涵蓋多 session（multi-session centroid averaging）</li>
+    <li><b>SNR=1.0（0 dB）條件最差</b>：噪音等響時，即使 spk4 F1 也降至 0.114；建議搭配更強的 SE 前處理</li>
   </ul>
 </div>
 
@@ -75,17 +75,19 @@ footer { text-align:center; padding:2rem; color:#aaa; font-size:.78rem }
 
 <!-- Table -->
 <div class="tcard">
-  <h2>詳細結果 <span class="badge">4 cases</span></h2>
+  <h2>詳細結果 <span class="badge">6 cases</span></h2>
   <table>
     <thead><tr>
       <th>Speaker</th><th>Ratio</th><th>Mode</th><th>SNR</th>
       <th>Precision</th><th>Recall</th><th>F1</th>
       <th>Mean Sim</th><th>Pred%</th><th>GT%</th><th>RTF</th><th>Audio</th>
     </tr></thead>
-    <tbody><tr><td>spk4</td><td>0.3</td><td>interleaved</td><td>0.2</td><td>0.750</td><td>0.003</td><td style="color:#f44336;font-weight:700">0.005</td><td>0.123</td><td>0.4%</td><td>38.1%</td><td>7.1x</td><td><a href="eval_output/spk4_r0.3_int_snr0.2.wav" target="_blank">▶</a></td></tr>
-<tr><td>spk4</td><td>1</td><td>interleaved</td><td>0.6</td><td>1.000</td><td>0.001</td><td style="color:#f44336;font-weight:700">0.002</td><td>0.099</td><td>0.1%</td><td>38.1%</td><td>8.2x</td><td><a href="eval_output/spk4_r1_int_snr0.6.wav" target="_blank">▶</a></td></tr>
-<tr><td>spk4</td><td>1.5</td><td>interleaved</td><td>1</td><td>0.000</td><td>0.000</td><td style="color:#f44336;font-weight:700">0.000</td><td>0.091</td><td>0.0%</td><td>38.1%</td><td>11.4x</td><td><a href="eval_output/spk4_r1.5_int_snr1.wav" target="_blank">▶</a></td></tr>
-<tr><td>spk7</td><td>0.3</td><td>three_segment</td><td>0.2</td><td>0.000</td><td>0.000</td><td style="color:#f44336;font-weight:700">0.000</td><td>0.097</td><td>0.0%</td><td>44.2%</td><td>15.6x</td><td><a href="eval_output/spk7_r0.3_thr_snr0.2.wav" target="_blank">▶</a></td></tr>
+    <tbody><tr><td>spk4</td><td>0.3</td><td>interleaved</td><td>0.2</td><td>0.705</td><td>0.117</td><td style="color:#f44336;font-weight:700">0.201</td><td>0.188</td><td>10.0%</td><td>60.4%</td><td>2.5x</td><td><a href="eval_output/spk4_r0.3_int_snr0.2.wav" target="_blank">▶</a></td></tr>
+<tr><td>spk4</td><td>1</td><td>interleaved</td><td>0.6</td><td>0.478</td><td>0.074</td><td style="color:#f44336;font-weight:700">0.128</td><td>0.173</td><td>6.5%</td><td>41.9%</td><td>2.2x</td><td><a href="eval_output/spk4_r1_int_snr0.6.wav" target="_blank">▶</a></td></tr>
+<tr><td>spk4</td><td>1.5</td><td>interleaved</td><td>1</td><td>0.343</td><td>0.069</td><td style="color:#f44336;font-weight:700">0.114</td><td>0.158</td><td>5.5%</td><td>27.4%</td><td>2.2x</td><td><a href="eval_output/spk4_r1.5_int_snr1.wav" target="_blank">▶</a></td></tr>
+<tr><td>spk7</td><td>0.3</td><td>three_segment</td><td>0.2</td><td>0.000</td><td>0.000</td><td style="color:#f44336;font-weight:700">0.000</td><td>0.012</td><td>0.0%</td><td>59.1%</td><td>2.3x</td><td><a href="eval_output/spk7_r0.3_thr_snr0.2.wav" target="_blank">▶</a></td></tr>
+<tr><td>spk7</td><td>1</td><td>three_segment</td><td>0.6</td><td>0.000</td><td>0.000</td><td style="color:#f44336;font-weight:700">0.000</td><td>0.008</td><td>0.0%</td><td>40.9%</td><td>2.4x</td><td><a href="eval_output/spk7_r1_thr_snr0.6.wav" target="_blank">▶</a></td></tr>
+<tr><td>spk7</td><td>1.5</td><td>three_segment</td><td>1</td><td>0.000</td><td>0.000</td><td style="color:#f44336;font-weight:700">0.000</td><td>0.013</td><td>0.0%</td><td>34.2%</td><td>2.4x</td><td><a href="eval_output/spk7_r1.5_thr_snr1.wav" target="_blank">▶</a></td></tr>
 </tbody>
   </table>
   <p class="note">
@@ -119,19 +121,19 @@ const bc = vals => vals.map(v =>
 
 new Chart(document.getElementById("cR"), { type:"bar", data:{
   labels: ["0.3", "1", "1.5"],
-  datasets: [{ data: [0.003, 0.002, 0.0], backgroundColor: bc([0.003, 0.002, 0.0]), borderRadius: 4 }]
+  datasets: [{ data: [0.1, 0.064, 0.057], backgroundColor: bc([0.1, 0.064, 0.057]), borderRadius: 4 }]
 }, options: opts("F1") });
 
 new Chart(document.getElementById("cS"), { type:"bar", data:{
   labels: ["0.2", "0.6", "1"],
-  datasets: [{ data: [0.003, 0.002, 0.0], backgroundColor: bc([0.003, 0.002, 0.0]), borderRadius: 4 }]
+  datasets: [{ data: [0.1, 0.064, 0.057], backgroundColor: bc([0.1, 0.064, 0.057]), borderRadius: 4 }]
 }, options: opts("F1") });
 
 new Chart(document.getElementById("cSim"), { type:"bar", data:{
-  labels: ["spk4 r=0.3 snr=0.2", "spk4 r=1 snr=0.6", "spk4 r=1.5 snr=1", "spk7 r=0.3 snr=0.2"],
+  labels: ["spk4 r=0.3 snr=0.2", "spk4 r=1 snr=0.6", "spk4 r=1.5 snr=1", "spk7 r=0.3 snr=0.2", "spk7 r=1 snr=0.6", "spk7 r=1.5 snr=1"],
   datasets: [
-    { label:"Mean Similarity", data:[0.123, 0.099, 0.091, 0.097], backgroundColor:"rgba(57,73,171,.7)", borderRadius:4 },
-    { label:"Threshold (0.25)", data:[0.25,0.25,0.25,0.25],
+    { label:"Mean Similarity", data:[0.1877, 0.1727, 0.1579, 0.0122, 0.0084, 0.0132], backgroundColor:"rgba(57,73,171,.7)", borderRadius:4 },
+    { label:"Threshold (0.25)", data:[0.25,0.25,0.25,0.25,0.25,0.25],
        type:"line", borderColor:"#f44336", borderDash:[5,5], pointRadius:0, borderWidth:2 }
   ]
 }, options:{

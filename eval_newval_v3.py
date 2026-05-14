@@ -55,7 +55,9 @@ THRESHOLD    = 0.25
 
 
 def load_models():
-    ecapa_path = MODELS_DIR / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
+    ecapa_path = MODELS_DIR / "campplus" / "campplus.onnx"
+    if not ecapa_path.exists():
+        ecapa_path = MODELS_DIR / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
     if not ecapa_path.exists():
         ecapa_path = MODELS_DIR / "ecapa_tdnn" / "ecapa_tdnn.onnx"
     encoder  = SpeakerEncoder(str(ecapa_path))

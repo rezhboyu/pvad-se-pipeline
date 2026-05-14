@@ -199,10 +199,11 @@ def run_pipeline(enrollment_path: str, input_path: str, output_path: str,
 
     # ── 1. 載入模型 ──────────────────────────────────
     print("\n[1/5] 載入模型...")
-    # 優先使用 WeSpeaker ResNet34-LM（官方驗證的 ONNX，鑑別力更佳）
-    ecapa_path = MODELS_DIR / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
+    # 優先使用 CAM++，退而求其次用 WeSpeaker ResNet34，最後才用 ECAPA-TDNN
+    ecapa_path = MODELS_DIR / "campplus" / "campplus.onnx"
     if not ecapa_path.exists():
-        # 退而求其次用舊版 ECAPA-TDNN ONNX
+        ecapa_path = MODELS_DIR / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
+    if not ecapa_path.exists():
         ecapa_path = MODELS_DIR / "ecapa_tdnn" / "ecapa_tdnn.onnx"
     assert ecapa_path.exists(), f"找不到 speaker encoder ONNX: {ecapa_path}"
 

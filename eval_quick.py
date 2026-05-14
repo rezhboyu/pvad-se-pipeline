@@ -27,7 +27,9 @@ def log(msg):
     print(msg, flush=True)
 
 def load_models():
-    ecapa = REPO_DIR / "models" / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
+    ecapa = REPO_DIR / "models" / "campplus" / "campplus.onnx"
+    if not ecapa.exists():
+        ecapa = REPO_DIR / "models" / "ecapa_tdnn" / "wespeaker_resnet34.onnx"
     if not ecapa.exists():
         ecapa = REPO_DIR / "models" / "ecapa_tdnn" / "ecapa_tdnn.onnx"
     return SpeakerEncoder(str(ecapa)), DTLNDenoiser(), SoftGate()

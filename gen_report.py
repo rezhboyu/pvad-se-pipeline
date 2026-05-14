@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate eval_report.html from hardcoded 4-case results."""
+"""Generate eval_report.html from hardcoded 6-case results (CAM++ model)."""
 import json, time
 from pathlib import Path
 
@@ -7,14 +7,18 @@ REPO = Path(__file__).resolve().parent
 THRESHOLD = 0.25
 
 results = [
-    {"speaker":4,"ratio":"0.3","mode":"interleaved",   "noise":"classroom","snr":"0.2",
-     "precision":0.750,"recall":0.003,"f1":0.005,"mean_sim":0.123,"target_ratio":0.004,"gt_ratio":0.381,"rtf":7.11,"output_file":"spk4_r0.3_int_snr0.2.wav"},
-    {"speaker":4,"ratio":"1",  "mode":"interleaved",   "noise":"classroom","snr":"0.6",
-     "precision":1.000,"recall":0.001,"f1":0.002,"mean_sim":0.099,"target_ratio":0.001,"gt_ratio":0.381,"rtf":8.22,"output_file":"spk4_r1_int_snr0.6.wav"},
-    {"speaker":4,"ratio":"1.5","mode":"interleaved",   "noise":"classroom","snr":"1",
-     "precision":0.000,"recall":0.000,"f1":0.000,"mean_sim":0.091,"target_ratio":0.000,"gt_ratio":0.381,"rtf":11.40,"output_file":"spk4_r1.5_int_snr1.wav"},
-    {"speaker":7,"ratio":"0.3","mode":"three_segment", "noise":"classroom","snr":"0.2",
-     "precision":0.000,"recall":0.000,"f1":0.000,"mean_sim":0.097,"target_ratio":0.000,"gt_ratio":0.442,"rtf":15.57,"output_file":"spk7_r0.3_thr_snr0.2.wav"},
+    {"speaker":4,"ratio":"0.3","mode":"interleaved",    "noise":"classroom","snr":"0.2",
+     "precision":0.7047,"recall":0.117, "f1":0.2007,"mean_sim":0.1877,"target_ratio":0.1004,"gt_ratio":0.6043,"rtf":2.476,"output_file":"spk4_r0.3_int_snr0.2.wav"},
+    {"speaker":4,"ratio":"1",  "mode":"interleaved",    "noise":"classroom","snr":"0.6",
+     "precision":0.4778,"recall":0.0739,"f1":0.128, "mean_sim":0.1727,"target_ratio":0.0647,"gt_ratio":0.4186,"rtf":2.229,"output_file":"spk4_r1_int_snr0.6.wav"},
+    {"speaker":4,"ratio":"1.5","mode":"interleaved",    "noise":"classroom","snr":"1",
+     "precision":0.3433,"recall":0.0687,"f1":0.1144,"mean_sim":0.1579,"target_ratio":0.0548,"gt_ratio":0.2738,"rtf":2.214,"output_file":"spk4_r1.5_int_snr1.wav"},
+    {"speaker":7,"ratio":"0.3","mode":"three_segment",  "noise":"classroom","snr":"0.2",
+     "precision":0.0,   "recall":0.0,   "f1":0.0,   "mean_sim":0.0122,"target_ratio":0.0,   "gt_ratio":0.5910,"rtf":2.317,"output_file":"spk7_r0.3_thr_snr0.2.wav"},
+    {"speaker":7,"ratio":"1",  "mode":"three_segment",  "noise":"classroom","snr":"0.6",
+     "precision":0.0,   "recall":0.0,   "f1":0.0,   "mean_sim":0.0084,"target_ratio":0.0,   "gt_ratio":0.4090,"rtf":2.367,"output_file":"spk7_r1_thr_snr0.6.wav"},
+    {"speaker":7,"ratio":"1.5","mode":"three_segment",  "noise":"classroom","snr":"1",
+     "precision":0.0,   "recall":0.0,   "f1":0.0,   "mean_sim":0.0132,"target_ratio":0.0002,"gt_ratio":0.3424,"rtf":2.363,"output_file":"spk7_r1.5_thr_snr1.wav"},
 ]
 
 def color(v):
@@ -63,7 +67,7 @@ html = f"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PVAD-SE newval_v3 評估報告</title>
+<title>PVAD-SE newval_v3 評估報告 (CAM++)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 * {{ margin:0; padding:0; box-sizing:border-box }}
@@ -99,9 +103,9 @@ footer {{ text-align:center; padding:2rem; color:#aaa; font-size:.78rem }}
 </head>
 <body>
 <header>
-  <h1>PVAD-SE Pipeline — newval_v3 評估報告</h1>
+  <h1>PVAD-SE Pipeline — newval_v3 評估報告 (CAM++)</h1>
   <p>Speakers 4 &amp; 7 &middot; 混音比例 0.3~1.5 &middot; 環境噪音 classroom &middot;
-     Threshold 0.25 &middot; {time.strftime("%Y-%m-%d %H:%M")}</p>
+     Threshold 0.25 &middot; Speaker Encoder: CAM++ (192-dim) &middot; {time.strftime("%Y-%m-%d %H:%M")}</p>
 </header>
 
 <div class="wrap">
@@ -118,11 +122,11 @@ footer {{ text-align:center; padding:2rem; color:#aaa; font-size:.78rem }}
 <div class="obs">
   <h3>&#9888; 觀察與分析</h3>
   <ul>
-    <li><b>Mean Sim 偏低（0.09~0.12 vs threshold=0.25）</b>：pipeline 幾乎不預測目標說話者，Recall ≈ 0</li>
-    <li><b>Session mismatch</b>：enrollment 為 session-1/2，test 音檔為 session-7；不同錄音環境導致 d-vector 距離增大</li>
-    <li><b>建議調低 threshold</b>：改為 0.05~0.10 可改善 Recall，或改用 personal_vad.onnx（LSTM 逐幀判斷，不依賴 d-vector 距離）</li>
-    <li><b>SNR=1.0 表現最差</b>：噪音與說話者等響（0 dB），pipeline 完全無法辨識目標說話者</li>
-    <li><b>RTF 7~16x（CPU）</b>：WeSpeaker ResNet34 每幀提取 embedding 計算量大；離線用途可接受，即時需 GPU</li>
+    <li><b>CAM++ 大幅改善 RTF（2.2~2.5x vs 舊版 7~16x）</b>：推論速度提升 3~6 倍，CPU 離線用途已可接受</li>
+    <li><b>Speaker 4 F1 顯著提升（0.114~0.201）</b>：CAM++ 對 spk4 的 session mismatch 容忍度更高，但 Recall 仍偏低（0.07~0.12）</li>
+    <li><b>Speaker 7 完全失效（Mean Sim 0.008~0.013）</b>：spk7 的 session-2（enrollment）與 session-7（test）聲學差異極大，CAM++ 也無法橋接</li>
+    <li><b>建議：spk7 需用同 session 音檔做 enrollment</b>，或擴充 enrollment 涵蓋多 session（multi-session centroid averaging）</li>
+    <li><b>SNR=1.0（0 dB）條件最差</b>：噪音等響時，即使 spk4 F1 也降至 0.114；建議搭配更強的 SE 前處理</li>
   </ul>
 </div>
 
@@ -187,7 +191,7 @@ new Chart(document.getElementById("cSim"), {{ type:"bar", data:{{
   labels: {json.dumps(sim_lbls)},
   datasets: [
     {{ label:"Mean Similarity", data:{json.dumps(sim_vals)}, backgroundColor:"rgba(57,73,171,.7)", borderRadius:4 }},
-    {{ label:"Threshold (0.25)", data:[{THRESHOLD},{THRESHOLD},{THRESHOLD},{THRESHOLD}],
+    {{ label:"Threshold (0.25)", data:[{",".join([str(THRESHOLD)]*len(results))}],
        type:"line", borderColor:"#f44336", borderDash:[5,5], pointRadius:0, borderWidth:2 }}
   ]
 }}, options:{{
