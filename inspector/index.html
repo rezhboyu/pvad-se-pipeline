@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PVAD Audio Inspector</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--card:#161b22;--border:#21262d;--border2:#30363d;
+  --text:#e6edf3;--muted:#8b949e;--blue:#388bfd;--green:#3fb950;
+  --red:#f85149;--orange:#d29922;--purple:#bc8cff;
+}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);
+     font-size:13px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+/* top bar */
+#topbar{height:44px;background:rgba(13,17,23,.96);border-bottom:1px solid var(--border);
+         display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;z-index:10}
+#topbar strong{font-size:14px}
+#server-input{background:var(--bg);border:1px solid var(--border2);border-radius:4px;
+               color:var(--text);font-size:11px;padding:3px 8px;width:200px}
+#server-status{font-size:11px;padding:2px 8px;border-radius:10px}
+.status-ok{background:#1a3320;color:var(--green)}
+.status-err{background:#3d1a1a;color:var(--red)}
+.status-wait{background:#1e2634;color:var(--muted)}
+/* layout */
+#body{display:flex;flex:1;overflow:hidden}
+/* sidebar */
+#sidebar{width:300px;flex-shrink:0;border-right:1px solid var(--border);
+         display:flex;flex-direction:column;overflow:hidden;background:var(--card)}
+#filters{padding:8px;display:flex;flex-direction:column;gap:5px;
+          border-bottom:1px solid var(--border);flex-shrink:0}
+#filters label{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px}
+#filters select{width:100%;background:var(--bg);border:1px solid var(--border2);
+                 border-radius:4px;color:var(--text);font-size:12px;padding:4px 6px}
+#file-count{font-size:10px;color:var(--muted);padding:5px 8px;
+             border-bottom:1px solid var(--border)}
+#file-list{flex:1;overflow-y:auto}
+.file-item{padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s}
+.file-item:hover{background:rgba(56,139,253,.08)}
+.file-item.active{background:rgba(56,139,253,.15);border-left:3px solid var(--blue)}
+.file-name{font-size:11px;color:var(--text);word-break:break-all;line-height:1.3}
+.file-meta{font-size:10px;color:var(--muted);margin-top:1px}
+/* main */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#player-area{flex:1;padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:12px}
+.card-title{font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;
+             text-transform:uppercase;letter-spacing:.5px}
+/* audio controls */
+#audio-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ctrl-btn{background:var(--blue);border:none;border-radius:5px;color:white;
+           cursor:pointer;font-size:12px;padding:5px 14px}
+.ctrl-btn:hover{opacity:.85}
+.ctrl-btn.secondary{background:var(--bg);border:1px solid var(--border2);color:var(--blue)}
+.ctrl-btn.secondary:hover{background:rgba(56,139,253,.1)}
+#time-display{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums;min-width:100px}
+#speed-select{background:var(--bg);border:1px solid var(--border2);border-radius:4px;
+               color:var(--text);font-size:11px;padding:3px 5px}
+/* timeline */
+#timeline-wrap{position:relative;width:100%;margin-top:8px;user-select:none}
+canvas{display:block;width:100%;border-radius:4px;cursor:pointer}
+#cursor-line{position:absolute;top:0;width:2px;background:rgba(255,255,255,.75);
+              pointer-events:none}
+/* legend */
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted)}
+.legend-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+/* cosine */
+#cosine-status{font-size:11px;color:var(--muted)}
+/* empty */
+#empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+        flex:1;color:var(--muted);gap:10px;font-size:13px}
+/* scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <strong>PVAD Audio Inspector</strong>
+  <span style="color:var(--muted);font-size:11px">本地伺服器：</span>
+  <input id="server-input" type="text" value="http://localhost:8899" placeholder="http://localhost:8899">
+  <span id="server-status" class="status-wait">連線中…</span>
+  <span style="flex:1"></span>
+  <span style="font-size:10px;color:var(--muted)">先執行 <code style="background:var(--card);padding:1px 5px;border-radius:3px">python 0511/serve_audio.py</code></span>
+</div>
+
+<div id="body">
+<div id="sidebar">
+  <div id="filters">
+    <label>類別</label>
+    <select id="sel-cat">
+      <option value="fixed_0.5s">fixed_0.5s ★</option>
+      <option value="fixed_0.3s">fixed_0.3s ★</option>
+      <option value="fixed_1s">fixed_1s ★</option>
+      <option value="random_switch">random_switch</option>
+      <option value="interleaved">interleaved</option>
+      <option value="ratio_switch_0.3s">ratio_switch_0.3s</option>
+      <option value="ratio_switch_0.5s">ratio_switch_0.5s</option>
+      <option value="ratio_switch_1s">ratio_switch_1s</option>
+      <option value="three_segment">three_segment</option>
+    </select>
+    <label>說話人</label>
+    <select id="sel-spk">
+      <option value="all">全部</option>
+      <option value="4">spk4 (User1)</option>
+      <option value="7">spk7 (hsuan)</option>
+    </select>
+    <label>噪音條件</label>
+    <select id="sel-noise">
+      <option value="no_noise">no_noise</option>
+      <option value="all">全部</option>
+      <option value="noise_classroom">classroom</option>
+      <option value="noise_fan">fan</option>
+      <option value="noise_cafeteria">cafeteria</option>
+      <option value="noise_crowd">crowd</option>
+    </select>
+  </div>
+  <div id="file-count">— 個檔案</div>
+  <div id="file-list"></div>
+</div>
+
+<div id="main">
+  <div id="player-area">
+    <div id="empty">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor" opacity=".2">
+        <path d="M12 3v9.28a4 4 0 1 0 1 0V3h-1z"/>
+      </svg>
+      從左側選擇一個音檔
+    </div>
+  </div>
+</div>
+</div>
+
+<audio id="audio" preload="auto"></audio>
+
+<script>
+let API = document.getElementById('server-input').value.replace(/\/$/, '');
+let currentPath = null, audioDur = 0;
+let gtSegs = [], cosineData = null;
+let tlCanvas = null;
+
+// ── Server ping ────────────────────────────────────────────────────────────────
+async function ping() {
+  const st = document.getElementById('server-status');
+  try {
+    const r = await fetch(API + '/files?cat=fixed_0.5s&spk=4&noise=no_noise', {signal: AbortSignal.timeout(2000)});
+    if (r.ok) {
+      st.textContent = '已連線'; st.className = 'status-ok';
+      loadFiles();
+    } else throw new Error(r.status);
+  } catch(e) {
+    st.textContent = '未連線'; st.className = 'status-err';
+  }
+}
+document.getElementById('server-input').addEventListener('change', e => {
+  API = e.target.value.replace(/\/$/, ''); ping();
+});
+ping();
+setInterval(ping, 8000);
+
+// ── File list ─────────────────────────────────────────────────────────────────
+async function loadFiles() {
+  const cat   = document.getElementById('sel-cat').value;
+  const spk   = document.getElementById('sel-spk').value;
+  const noise = document.getElementById('sel-noise').value;
+  let files;
+  try {
+    const r = await fetch(`${API}/files?cat=${cat}&spk=${spk}&noise=${noise}`);
+    files = await r.json();
+  } catch { return; }
+  document.getElementById('file-count').textContent = `${files.length} 個檔案`;
+  const list = document.getElementById('file-list');
+  list.innerHTML = '';
+  files.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `<div class="file-name">${f.name}</div>
+                     <div class="file-meta">spk${f.spk} · ${f.noise}</div>`;
+    div.onclick = () => { loadFile(f, div); };
+    list.appendChild(div);
+  });
+}
+
+// ── Load file ─────────────────────────────────────────────────────────────────
+async function loadFile(f, el) {
+  document.querySelectorAll('.file-item').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  currentPath = f.path; cosineData = null;
+
+  const area = document.getElementById('player-area');
+  area.innerHTML = buildUI(f);
+
+  const audio = document.getElementById('audio');
+  audio.src   = `${API}/audio?p=${encodeURIComponent(f.path)}`;
+  audio.load();
+  audio.addEventListener('loadedmetadata', () => { audioDur = audio.duration; drawTL(); });
+  audio.addEventListener('timeupdate', updateCursor);
+  audio.onended = () => { document.getElementById('play-btn').textContent = '▶ 播放'; };
+
+  document.getElementById('play-btn').onclick = () => {
+    if (audio.paused) audio.play(); else audio.pause();
+    document.getElementById('play-btn').textContent = audio.paused ? '▶ 播放' : '⏸ 暫停';
+  };
+  document.getElementById('speed-select').onchange = e => { audio.playbackRate = +e.target.value; };
+
+  // fetch GT
+  try {
+    const r = await fetch(`${API}/gt?p=${encodeURIComponent(f.path)}`);
+    const j  = await r.json();
+    gtSegs   = j.segments || [];
+    drawTL();
+  } catch {}
+
+  tlCanvas = document.getElementById('tl-canvas');
+  tlCanvas.onclick = e => {
+    const rect = tlCanvas.getBoundingClientRect();
+    document.getElementById('audio').currentTime = (e.clientX - rect.left) / rect.width * audioDur;
+  };
+  document.getElementById('cosine-btn').onclick = loadCosine;
+}
+
+function buildUI(f) {
+  return `
+  <div class="card">
+    <div class="card-title">${f.name}</div>
+    <div id="audio-row">
+      <button id="play-btn" class="ctrl-btn">▶ 播放</button>
+      <span id="time-display">0.00 / --.-s</span>
+      <span style="color:var(--muted);font-size:11px">速度</span>
+      <select id="speed-select">
+        <option value="0.5">0.5×</option>
+        <option value="0.75">0.75×</option>
+        <option value="1" selected>1×</option>
+        <option value="1.5">1.5×</option>
+        <option value="2">2×</option>
+      </select>
+    </div>
+    <div id="timeline-wrap">
+      <canvas id="tl-canvas" height="80"></canvas>
+      <div id="cursor-line" style="left:0;height:80px"></div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#3fb950"></div>目標說話人 (label=1)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f85149"></div>同性別非目標 (label=2)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#d29922"></div>異性別非目標 (label=3)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2d333b"></div>靜音 (label=0)</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">CAM++ Cosine 分析</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button id="cosine-btn" class="ctrl-btn secondary">計算 cosine（1-2 秒）</button>
+      <span id="cosine-status"></span>
+    </div>
+    <div id="cosine-wrap" style="margin-top:8px;display:none">
+      <canvas id="cos-canvas" height="64"></canvas>
+      <div class="legend" style="margin-top:4px">
+        <div class="legend-item"><div class="legend-dot" style="background:#388bfd"></div>Cosine 相似度</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d29922;opacity:.6"></div>閾值 0.525</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+const COLORS = { 0:'#2d333b', 1:'#3fb950', 2:'#f85149', 3:'#d29922' };
+
+function drawTL() {
+  tlCanvas = document.getElementById('tl-canvas');
+  if (!tlCanvas) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = tlCanvas.clientWidth || 600;
+  tlCanvas.width = W * dpr; tlCanvas.height = 80 * dpr;
+  const ctx = tlCanvas.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#0d1117'; ctx.fillRect(0, 0, W, 80);
+  if (!audioDur) return;
+  for (const seg of gtSegs) {
+    ctx.fillStyle = COLORS[seg.label] || '#555';
+    ctx.globalAlpha = .85;
+    ctx.fillRect(seg.start/audioDur*W, 0, (seg.end-seg.start)/audioDur*W, 52);
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = '#8b949e'; ctx.font = '9px monospace';
+  const step = audioDur>30?5:audioDur>10?2:1;
+  for (let t=0; t<=audioDur; t+=step) {
+    const x = t/audioDur*W;
+    ctx.fillStyle = '#30363d'; ctx.fillRect(x, 52, 1, 10);
+    ctx.fillStyle = '#8b949e'; ctx.fillText(`${t.toFixed(0)}s`, x+2, 70);
+  }
+}
+
+function updateCursor() {
+  const audio = document.getElementById('audio');
+  if (!audioDur || !tlCanvas) return;
+  const frac = audio.currentTime / audioDur;
+  const td = document.getElementById('time-display');
+  if (td) td.textContent = `${audio.currentTime.toFixed(2)} / ${audioDur.toFixed(1)}s`;
+  const cl = document.getElementById('cursor-line');
+  if (cl) { cl.style.left = (frac * tlCanvas.clientWidth) + 'px'; }
+}
+
+// ── Cosine chart ──────────────────────────────────────────────────────────────
+async function loadCosine() {
+  const btn = document.getElementById('cosine-btn');
+  const st  = document.getElementById('cosine-status');
+  if (!currentPath) return;
+  btn.disabled = true; st.textContent = '計算中…';
+  try {
+    const r = await fetch(`${API}/cosine?p=${encodeURIComponent(currentPath)}`);
+    if (!r.ok) { st.textContent = `錯誤 ${r.status}`; return; }
+    cosineData = await r.json();
+    if (cosineData.error) { st.textContent = cosineData.error; return; }
+    drawCosine();
+    st.textContent = `${cosineData.cosine.length} frames`;
+  } catch(e) { st.textContent = '失敗: ' + e.message; }
+  btn.disabled = false;
+}
+
+function drawCosine() {
+  const wrap = document.getElementById('cosine-wrap');
+  wrap.style.display = '';
+  const cc = document.getElementById('cos-canvas');
+  const dpr = window.devicePixelRatio || 1;
+  const W = cc.clientWidth || 600;
+  cc.width = W * dpr; cc.height = 64 * dpr;
+  const ctx = cc.getContext('2d'); ctx.scale(dpr, dpr);
+  ctx.fillStyle = '#161b22'; ctx.fillRect(0, 0, W, 64);
+  const dur = cosineData.duration, cos = cosineData.cosine, times = cosineData.times;
+  // GT background
+  for (const seg of gtSegs) {
+    ctx.fillStyle = COLORS[seg.label] + '28';
+    ctx.fillRect(seg.start/dur*W, 0, (seg.end-seg.start)/dur*W, 64);
+  }
+  // Threshold
+  ctx.strokeStyle = '#d2992260'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  const ty = (1-.525)*64; ctx.beginPath(); ctx.moveTo(0,ty); ctx.lineTo(W,ty); ctx.stroke();
+  ctx.setLineDash([]);
+  // Cosine curve
+  ctx.strokeStyle = '#388bfd'; ctx.lineWidth=1.5; ctx.beginPath();
+  times.forEach((t,i) => {
+    const x=t/dur*W, y=(1-Math.max(0,Math.min(1,cos[i])))*64;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  cc.onclick = e => {
+    const rect = cc.getBoundingClientRect();
+    document.getElementById('audio').currentTime = (e.clientX-rect.left)/rect.width*dur;
+  };
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+['sel-cat','sel-spk','sel-noise'].forEach(id =>
+  document.getElementById(id).addEventListener('change', loadFiles));
+
+window.addEventListener('resize', () => { drawTL(); if (cosineData) drawCosine(); });
+</script>
+</body>
+</html>
