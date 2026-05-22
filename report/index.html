@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PVAD Evaluation Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--red:#f87171;--yellow:#fbbf24;--text:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6}
+header{background:linear-gradient(135deg,#1e2435,#252938);padding:32px 24px;border-bottom:1px solid var(--border)}
+header h1{font-size:1.8rem;font-weight:700;letter-spacing:-.5px;margin-bottom:4px}
+header p{color:var(--muted);font-size:0.9rem}
+.container{max-width:1200px;margin:0 auto;padding:24px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.kpi .val{font-size:2.2rem;font-weight:800;color:var(--accent);letter-spacing:-1px}
+.kpi .val.green{color:var(--green)}
+.kpi .val.yellow{color:var(--yellow)}
+.kpi label{display:block;color:var(--muted);font-size:0.8rem;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:768px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px}
+.card h2{font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+.card h2 span{color:var(--muted);font-size:.8rem;font-weight:400;margin-left:8px}
+canvas{max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{color:var(--muted);text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);font-weight:500;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px}
+td{padding:8px 12px;border-bottom:1px solid #1e2133}
+tr:hover td{background:#1e2235}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.7rem;font-weight:600}
+.badge.best{background:#1a3a2a;color:var(--green)}
+.badge.apk{background:#2a2a1a;color:var(--yellow)}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-row .lbl{width:220px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.bar-row .bar{flex:1;height:22px;background:#1e2235;border-radius:4px;overflow:hidden}
+.bar-row .bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:6px;font-size:11px;font-weight:600;color:#fff;transition:width .5s}
+.bar-row .num{width:52px;text-align:right;font-size:12px;color:var(--muted)}
+.insight{background:#151922;border-left:3px solid var(--accent);padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:13px;line-height:1.7}
+.insight strong{color:var(--accent)}
+footer{text-align:center;padding:32px;color:var(--muted);font-size:.8rem;border-top:1px solid var(--border);margin-top:24px}
+</style>
+</head>
+<body>
+<header>
+<div class="container" style="padding:0">
+<h1>PVAD Evaluation Report</h1>
+<p>CAM++ Speaker Embedding · newval_v3 testset · 2026-05-22</p>
+</div>
+</header>
+<div class="container">
+
+<!-- KPIs -->
+<div class="kpi-grid" id="kpis"></div>
+
+<!-- Strategy Comparison -->
+<div class="card" style="margin-bottom:16px">
+<h2>Strategy Comparison <span>CAM++ (new) · newval_v3 overall F1</span></h2>
+<div id="strat-bars"></div>
+</div>
+
+<!-- Category + Noise -->
+<div class="grid2">
+<div class="card">
+<h2>Per-Category F1 <span>best config vs APK model</span></h2>
+<canvas id="catChart" height="280"></canvas>
+</div>
+<div class="card">
+<h2>Per-Noise F1 <span>APK model · frame-strict</span></h2>
+<canvas id="noiseChart" height="280"></canvas>
+</div>
+</div>
+
+<!-- SNR + Speaker -->
+<div class="grid2">
+<div class="card">
+<h2>F1 vs SNR Trend <span>APK model · frame-strict</span></h2>
+<canvas id="snrChart" height="220"></canvas>
+</div>
+<div class="card">
+<h2>Per-Speaker Breakdown <span>APK model · frame-strict</span></h2>
+<div id="spk-content" style="padding-top:8px"></div>
+<h2 style="margin-top:24px">Key Insights</h2>
+<div id="insights" style="margin-top:12px"></div>
+</div>
+</div>
+
+<!-- Full Strategy Table -->
+<div class="card" style="margin-top:16px">
+<h2>Strategy Detail Table <span>best F1 per strategy</span></h2>
+<div style="overflow-x:auto">
+<table id="strat-table"></table>
+</div>
+</div>
+
+</div>
+<footer>PVAD Project · CAM++ ONNX · newval_v3 · Report generated 2026-05-22</footer>
+
+<script>
+const DATA = {
+  "strategies": [
+    {
+      "label": "Median Filter ★ BEST",
+      "f1": 0.7255,
+      "tar": 0.885,
+      "far": 0.576,
+      "best": true
+    },
+    {
+      "label": "VAD Gate",
+      "f1": 0.7156,
+      "tar": 0.887,
+      "far": 0.614,
+      "best": false
+    },
+    {
+      "label": "Baseline (cosine ≥ thr)",
+      "f1": 0.7146,
+      "tar": 0.893,
+      "far": 0.63,
+      "best": false
+    },
+    {
+      "label": "Energy Segmentation",
+      "f1": 0.7132,
+      "tar": 0.806,
+      "far": 0.472,
+      "best": false
+    },
+    {
+      "label": "Hysteresis",
+      "f1": 0.7129,
+      "tar": 0.9,
+      "far": 0.649,
+      "best": false
+    },
+    {
+      "label": "Voting (M-of-K)",
+      "f1": 0.6955,
+      "tar": 0.952,
+      "far": 0.816,
+      "best": false
+    },
+    {
+      "label": "Differential",
+      "f1": 0.6954,
+      "tar": 0.959,
+      "far": 0.83,
+      "best": false
+    },
+    {
+      "label": "VAD Weighted",
+      "f1": 0.6918,
+      "tar": 0.869,
+      "far": 0.668,
+      "best": false
+    },
+    {
+      "label": "EMA Adaptive",
+      "f1": 0.6589,
+      "tar": 0.693,
+      "far": 0.427,
+      "best": false
+    }
+  ],
+  "categories": [
+    "fixed_0.3s",
+    "fixed_0.5s",
+    "fixed_1s",
+    "interleaved",
+    "random_switch",
+    "ratio_switch_0.3s",
+    "ratio_switch_0.5s",
+    "ratio_switch_1s",
+    "three_segment"
+  ],
+  "cat_best": {
+    "ratio_switch_0.3s": 0.9342,
+    "fixed_0.3s": 0.7514,
+    "random_switch": 0.7427,
+    "fixed_0.5s": 0.7222,
+    "fixed_1s": 0.6949,
+    "interleaved": 0.6926
+  },
+  "cat_apk": {
+    "fixed_0.3s": 0.6282,
+    "fixed_0.5s": 0.6331,
+    "fixed_1s": 0.6372,
+    "interleaved": 0.6115,
+    "random_switch": 0.6547,
+    "ratio_switch_0.3s": 0.6272,
+    "ratio_switch_0.5s": 0.6343,
+    "ratio_switch_1s": 0.628,
+    "three_segment": 0.621
+  },
+  "noise": [
+    {
+      "label": "Clean (no noise)",
+      "f1": 0.6693,
+      "tar": 0.887,
+      "far": 0.74
+    },
+    {
+      "label": "Classroom",
+      "f1": 0.6559,
+      "tar": 0.91,
+      "far": 0.836
+    },
+    {
+      "label": "Cafeteria",
+      "f1": 0.6304,
+      "tar": 0.878,
+      "far": 0.878
+    },
+    {
+      "label": "Crowd",
+      "f1": 0.6292,
+      "tar": 0.866,
+      "far": 0.856
+    },
+    {
+      "label": "Fan",
+      "f1": 0.5722,
+      "tar": 0.697,
+      "far": 0.714
+    }
+  ],
+  "snr": [
+    {
+      "snr": 0.2,
+      "f1": 0.6553
+    },
+    {
+      "snr": 0.4,
+      "f1": 0.6328
+    },
+    {
+      "snr": 0.6,
+      "f1": 0.6169
+    },
+    {
+      "snr": 0.8,
+      "f1": 0.6095
+    },
+    {
+      "snr": 1.0,
+      "f1": 0.6009
+    }
+  ],
+  "spk": {
+    "spk4 (User1)": 0.6614,
+    "spk7 (hsuan)": 0.6009
+  },
+  "overall_best": 0.7255,
+  "overall_apk": 0.6256
+};
+
+// KPIs
+const kpiEl = document.getElementById('kpis');
+const kpis = [
+  {val: DATA.overall_best.toFixed(4), label: 'Best F1 (CAM++ new)', cls:''},
+  {val: DATA.overall_apk.toFixed(4),  label: 'APK Model F1', cls:'yellow'},
+  {val: '0.7255', label: 'F1 Ceiling (oracle GT)', cls:'green'},
+  {val: Object.keys(DATA.strategies).length, label: 'Strategies Tested', cls:''},
+];
+kpiEl.innerHTML = kpis.map(k=>
+  `<div class="kpi"><div class="val ${k.cls}">${k.val}</div><label>${k.label}</label></div>`
+).join('');
+
+// Strategy bars
+const stEl = document.getElementById('strat-bars');
+const maxF1 = Math.max(...DATA.strategies.map(s=>s.f1));
+stEl.innerHTML = DATA.strategies.map(s => {
+  const pct = (s.f1/maxF1*100).toFixed(1);
+  const color = s.best ? '#4ade80' : '#6c8eff';
+  return `<div class="bar-row">
+    <div class="lbl">${s.label}</div>
+    <div class="bar"><div class="bar-fill" style="width:${pct}%;background:${color}">${s.f1}</div></div>
+    <div class="num">TAR ${s.tar}</div>
+  </div>`;
+}).join('');
+
+// Category chart
+const catLabels = DATA.categories;
+const catBest = catLabels.map(c => DATA.cat_best[c] || null);
+const catApk  = catLabels.map(c => DATA.cat_apk[c]  || null);
+new Chart(document.getElementById('catChart'), {
+  type: 'bar',
+  data: {
+    labels: catLabels.map(l=>l.replace('_',' ')),
+    datasets: [
+      {label:'Best Config (F_w0.3_h0.05_W5)', data:catBest, backgroundColor:'rgba(108,142,255,0.8)', borderRadius:4},
+      {label:'APK Model', data:catApk, backgroundColor:'rgba(251,191,36,0.7)', borderRadius:4},
+    ]
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    scales: {
+      x:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#1e2235'}},
+      y:{min:0,max:1,ticks:{color:'#64748b'},grid:{color:'#1e2235'}}
+    },
+    plugins:{legend:{labels:{color:'#e2e8f0',font:{size:11}}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.raw?.toFixed(4)??'N/A'}`}}}
+  }
+});
+
+// Noise chart
+const noiseLabels = DATA.noise.map(n=>n.label);
+const noiseF1 = DATA.noise.map(n=>n.f1);
+new Chart(document.getElementById('noiseChart'), {
+  type: 'bar',
+  data: {
+    labels: noiseLabels,
+    datasets: [{
+      label:'F1', data:noiseF1,
+      backgroundColor: noiseF1.map((_,i)=>i===0?'rgba(74,222,128,0.8)':'rgba(248,113,113,0.7)'),
+      borderRadius:4
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false, indexAxis:'y',
+    scales:{
+      x:{min:0,max:0.8,ticks:{color:'#64748b'},grid:{color:'#1e2235'}},
+      y:{ticks:{color:'#64748b',font:{size:11}},grid:{color:'#1e2235'}}
+    },
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`F1: ${ctx.raw.toFixed(4)}`}}}
+  }
+});
+
+// SNR chart
+const snrX = DATA.snr.map(s=>s.snr);
+const snrY = DATA.snr.map(s=>s.f1);
+new Chart(document.getElementById('snrChart'), {
+  type:'line',
+  data:{
+    labels:snrX.map(x=>`SNR ${x}`),
+    datasets:[{
+      label:'F1', data:snrY, borderColor:'#6c8eff', backgroundColor:'rgba(108,142,255,0.1)',
+      tension:.3, fill:true, pointBackgroundColor:'#6c8eff', pointRadius:5
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ticks:{color:'#64748b'},grid:{color:'#1e2235'}},
+      y:{min:0.55,max:0.75,ticks:{color:'#64748b'},grid:{color:'#1e2235'}}
+    },
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`F1: ${ctx.raw.toFixed(4)}`}}}
+  }
+});
+
+// Speaker breakdown
+const spkEl = document.getElementById('spk-content');
+spkEl.innerHTML = Object.entries(DATA.spk).map(([k,v])=>{
+  const pct = (v*100).toFixed(1);
+  return `<div class="bar-row" style="margin-bottom:10px">
+    <div class="lbl" style="width:150px">${k}</div>
+    <div class="bar"><div class="bar-fill" style="width:${pct}%;background:#6c8eff">${v}</div></div>
+  </div>`;
+}).join('');
+
+// Insights
+const insights = [
+  `<strong>F1 ceiling = 0.7255</strong> — oracle GT segmentation gives same F1 as best sliding window. The bottleneck is <em>speaker similarity</em>, not segmentation.`,
+  `<strong>spk7 (hsuan) is harder</strong>: gap/std = 0.85 vs spk4's 1.26. Non-targets (spk10, spk12) are inherently close to spk7 in CAM++ embedding space.`,
+  `<strong>0.3s window is optimal</strong>: longer windows push non-target cosine higher (0.604 at 1s vs 0.520 at 0.3s), reducing gap without improving target similarity.`,
+  `<strong>Next best step</strong>: swap to ECAPA-TDNN or add more spk7 enrollment utterances. Dynamic segmentation strategies showed no improvement.`,
+];
+document.getElementById('insights').innerHTML = insights.map(t=>`<div class="insight">${t}</div>`).join('');
+
+// Strategy table
+const tbl = document.getElementById('strat-table');
+tbl.innerHTML = `<tr><th>Strategy</th><th>Description</th><th>Best F1</th><th>TAR</th><th>FAR</th></tr>` +
+  DATA.strategies.map(s=>`<tr>
+    <td>${s.best?'<span class="badge best">★ BEST</span> ':''}${s.label.replace(' ★ BEST','')}</td>
+    <td><code>${
+      s.label.includes('Median')?'median(cos,W≥5) ≥ thr  w=0.3s h=0.05s':
+      s.label.includes('Baseline')?'cos ≥ thr':
+      s.label.includes('VAD Gate')?'VAD(p≥vt) AND cos ≥ thr':
+      s.label.includes('Hysteresis')?'thr_on / thr_off dual threshold':
+      s.label.includes('Differential')?'cos_tgt - cos_bg ≥ margin':
+      s.label.includes('Voting')?'M-of-K frames above thr':
+      s.label.includes('EMA')?'EMA smooth + adaptive thr':
+      s.label.includes('Energy')?'energy peak segmentation':
+      'VAD prob weighted mean'
+    }</code></td>
+    <td style="font-weight:700;color:${s.best?'#4ade80':'#e2e8f0'}">${s.f1}</td>
+    <td>${s.tar}</td>
+    <td>${s.far}</td>
+  </tr>`).join('');
+</script>
+</body>
+</html>
