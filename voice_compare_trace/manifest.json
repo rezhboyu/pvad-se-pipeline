@@ -1,0 +1,74 @@
+[
+  {
+    "fp_idx": 1,
+    "target_spk": 4,
+    "label": 3,
+    "max_cos": 0.36031943559646606,
+    "mean_cos": 0.10440704226493835,
+    "source_file": "f756da80-46e7-4ea3-9295-a2157f4bdbe8_user1_7_mixed.wav",
+    "category": "random_switch",
+    "seg_start": 10.807,
+    "seg_end": 12.314,
+    "duration": 1.5069999999999997,
+    "files": {
+      "pure": "FP01_pure_dur1.5s_cos0.360.wav",
+      "wide": "FP01_wide_dur3.5s.wav",
+      "full": "FP01_full_source.wav",
+      "gt": "FP01_full_source.json"
+    }
+  },
+  {
+    "fp_idx": 2,
+    "target_spk": 7,
+    "label": 2,
+    "max_cos": 0.32449042797088623,
+    "mean_cos": 0.110202856361866,
+    "source_file": "b6dbc0fc-1d57-4647-aa85-54f9bea08743_hsuan_7_mixed.wav",
+    "category": "interleaved",
+    "seg_start": 21.154,
+    "seg_end": 22.489,
+    "duration": 1.3350000000000009,
+    "files": {
+      "pure": "FP02_pure_dur1.3s_cos0.324.wav",
+      "wide": "FP02_wide_dur3.3s.wav",
+      "full": "FP02_full_source.wav",
+      "gt": "FP02_full_source.json"
+    }
+  },
+  {
+    "fp_idx": 3,
+    "target_spk": 4,
+    "label": 3,
+    "max_cos": 0.3206094801425934,
+    "mean_cos": 0.08664094656705856,
+    "source_file": "f0561d1a-7634-4f49-988f-a6c076bec253_User1_7_mixed.wav",
+    "category": "random_switch",
+    "seg_start": 7.972,
+    "seg_end": 9.541,
+    "duration": 1.569,
+    "files": {
+      "pure": "FP03_pure_dur1.6s_cos0.321.wav",
+      "wide": "FP03_wide_dur3.6s.wav",
+      "full": "FP03_full_source.wav",
+      "gt": "FP03_full_source.json"
+    }
+  },
+  {
+    "fp_idx": 4,
+    "target_spk": 4,
+    "label": 2,
+    "max_cos": 0.3189506232738495,
+    "mean_cos": 0.0977187305688858,
+    "source_file": "f0561d1a-7634-4f49-988f-a6c076bec253_User1_7_mixed.wav",
+    "category": "interleaved",
+    "seg_start": 15.177,
+    "seg_end": 16.793,
+    "duration": 1.6159999999999997,
+    "files": {
+      "pure": "FP04_pure_dur1.6s_cos0.319.wav",
+      "wide": "FP04_wide_dur3.6s.wav",
+      "full": "FP04_full_source.wav",
+      "gt": "FP04_full_source.json"
+    }
+  }
+]
