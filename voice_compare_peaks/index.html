@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FP 高 cos 微片段驗證 — PVAD</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;padding:18px;max-width:1000px;margin:0 auto}
+h1{font-size:1.4rem;margin-bottom:6px}
+.lead{color:var(--muted);font-size:13px;margin-bottom:18px}
+.intro{background:#1a2030;border-left:3px solid var(--accent);padding:12px 14px;border-radius:0 8px 8px 0;margin-bottom:18px;font-size:13px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.section h2{font-size:1rem;margin-bottom:8px;color:var(--accent)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center;padding:10px;background:#151922;border-radius:6px;margin-bottom:8px;border-left:3px solid var(--red)}
+.row.boundary{border-left-color:var(--yellow)}
+.row.mid{border-left-color:var(--red)}
+.box .name{font-weight:600;font-size:12px;margin-bottom:4px}
+.cos{display:inline-block;background:#2a2d3a;color:var(--accent);padding:1px 6px;border-radius:99px;font-family:monospace;font-size:11px;margin-left:4px}
+.tag{font-size:10px;padding:1px 6px;border-radius:99px;margin-left:4px}
+.tag.boundary{background:#5a3a1e;color:#fde68a}
+.tag.mid{background:#5a1e1e;color:#fca5a5}
+audio{width:100%;height:32px;margin-top:4px}
+.note{background:#1a2030;border-left:3px solid var(--accent);padding:8px 12px;margin-top:14px;font-size:12px;color:#aaa}
+.enroll-row{background:#1a2030;padding:10px;border-radius:8px;margin-bottom:14px;border-left:3px solid var(--green)}
+.audio-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:6px}
+.audio-row .lbl{font-size:11px;color:var(--muted);font-weight:600;text-align:right}
+</style>
+</head>
+<body>
+<h1>FP 高 cos 微片段驗證</h1>
+<p class="lead">每個 FP 段裡 cos 最高的 0.3s 窗口（pad 到 0.5s 方便聽）。如果你聽到的是 target 聲音 → boundary bleed；如果是不同的聲音 → CAM++ chunk-level 偶發雜訊（這是 0.3s 嵌入本身的限制）。</p>
+
+<div class="intro">
+<b>觀察重點：</b><br>
+🟡 <b>END/START boundary</b>: 高 cos 在 FP 段的最邊緣，可能因為 GT 標註精度（1ms = 16 samples 誤差）讓 target 聲音稍微 bleed 進來。<br>
+🔴 <b>MID</b>: 高 cos 在 FP 段中間（離兩邊都遠），不可能是 boundary bleed。**是 CAM++ chunk-level 嵌入的真實雜訊**。
+</div>
+
+<div class="enroll-row">
+  <div class="audio-row"><div class="lbl">User1 (spk4)</div><audio controls src="spk4_User1_enroll.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">hsuan (spk7)</div><audio controls src="spk7_hsuan_enroll.wav"></audio></div>
+</div>
+
+<div class="section">
+<h2>FP#1 (target=spk4, label=3)</h2>
+<div class="row boundary">
+  <div class="box">
+    <div class="name">peak @ 1.20-1.50s (END boundary) <span class="cos">cos=0.355</span><span class="tag boundary">END</span></div>
+    <audio controls src="FP1_peak_1.20-1.50s_cos0.355_END_boundary.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">這是 FP 段的最末 0.3s。FP 段在 mix 檔的 10.81-12.31s，後面 12.31s 才接 target。如果你聽到 User1 的聲音，那就是 boundary bleed。</div>
+</div>
+<div class="row mid">
+  <div class="box">
+    <div class="name">peak @ 0.25-0.55s (MID) <span class="cos">cos=0.281</span><span class="tag mid">MID</span></div>
+    <audio controls src="FP1_peak_0.25-0.55s_cos0.281_MID.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">FP 段中間，離邊界 0.25s+。應該是純非目標。</div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP#2 (target=spk7, label=2)</h2>
+<div class="row boundary">
+  <div class="box">
+    <div class="name">peak @ 0.95-1.25s (END boundary) <span class="cos">cos=0.324</span><span class="tag boundary">END</span></div>
+    <audio controls src="FP2_peak_0.95-1.25s_cos0.324_END_boundary.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">FP 段最後 0.3s。後接 target hsuan 段。聽看看有沒有 hsuan 聲音 bleed。</div>
+</div>
+<div class="row mid">
+  <div class="box">
+    <div class="name">peak @ 0.70-1.00s (MID) <span class="cos">cos=0.198</span><span class="tag mid">MID</span></div>
+    <audio controls src="FP2_peak_0.70-1.00s_cos0.198_MID.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">FP 段中段。</div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP#3 (target=spk4, label=3) — 關鍵 case</h2>
+<div class="row mid">
+  <div class="box">
+    <div class="name">peak @ 0.75-1.05s (MID, 離邊界 0.5s+) <span class="cos">cos=0.322</span><span class="tag mid">MID 確定無 bleed</span></div>
+    <audio controls src="FP3_peak_0.75-1.05s_cos0.322_MID_clear_non_boundary.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa"><b>這個最關鍵</b>：FP 是 1.57s 長，這個高 cos 0.3s 在中間（0.75-1.05s），離兩邊都超過 0.5s。<b>不可能是 boundary bleed</b>。如果這聽起來像 User1 → CAM++ 真的把這個非目標誤判；如果不像 → CAM++ chunk-level 嵌入有雜訊（0.3s 太短）。</div>
+</div>
+<div class="row mid">
+  <div class="box">
+    <div class="name">peak @ 0.55-0.85s (MID) <span class="cos">cos=0.276</span><span class="tag mid">MID</span></div>
+    <audio controls src="FP3_peak_0.55-0.85s_cos0.276_MID.wav"></audio>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP#4 (target=spk4, label=2, 極緊密交錯)</h2>
+<div class="row boundary">
+  <div class="box">
+    <div class="name">peak @ 1.25-1.55s (END boundary) <span class="cos">cos=0.319</span><span class="tag boundary">END</span></div>
+    <audio controls src="FP4_peak_1.25-1.55s_cos0.319_END_boundary.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">後接 target 0.20s 微短段，很可能 bleed。</div>
+</div>
+<div class="row boundary">
+  <div class="box">
+    <div class="name">peak @ 0.10-0.40s (START boundary) <span class="cos">cos=0.198</span><span class="tag boundary">START</span></div>
+    <audio controls src="FP4_peak_0.10-0.40s_cos0.198_START_boundary.wav"></audio>
+  </div>
+  <div class="box" style="font-size:11px;color:#aaa">前接 target 0.23s 微短段，很可能 bleed。</div>
+</div>
+</div>
+
+<div class="section">
+<h2>結論依據</h2>
+<div class="note">
+<b>聽完後請告訴我：</b>
+<ol style="padding-left:20px;margin-top:6px">
+  <li><b>FP#3 MID 那個</b>（0.75-1.05s, cos=0.322）— 聽起來像 User1 嗎？</li>
+  <li><b>END boundary 的</b>（FP#1, #2, #4 的 END）— 有沒有聽到 target 聲音的痕跡？</li>
+  <li><b>MID 的</b>（FP#1 0.25-0.55s, FP#2 0.70-1.00s）— 完全不像 target？</li>
+</ol>
+<p style="margin-top:8px">
+<b>判定：</b><br>
+A. 全部都不像 target → 模型誤判，是 0.3s 嵌入雜訊（已知問題，靠 smoothing 緩解）<br>
+B. END 的有，MID 的不像 → boundary bleed 是主因（修 GT 精度可解）<br>
+C. MID 的也像 target → 有真實的聲學重疊，或 mix 時有 bug（需查代碼）
+</p>
+</div>
+</div>
+
+</body>
+</html>
