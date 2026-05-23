@@ -1,0 +1,82 @@
+[
+  {
+    "file": "FP1_peak_1.20-1.50s_cos0.355_END_boundary.wav",
+    "fp_idx": 1,
+    "win_start": 1.2,
+    "win_end": 1.5,
+    "cos": 0.355,
+    "comment": "END_boundary",
+    "target_spk": 4,
+    "label": 3
+  },
+  {
+    "file": "FP1_peak_0.25-0.55s_cos0.281_MID.wav",
+    "fp_idx": 1,
+    "win_start": 0.25,
+    "win_end": 0.55,
+    "cos": 0.281,
+    "comment": "MID",
+    "target_spk": 4,
+    "label": 3
+  },
+  {
+    "file": "FP2_peak_0.95-1.25s_cos0.324_END_boundary.wav",
+    "fp_idx": 2,
+    "win_start": 0.95,
+    "win_end": 1.25,
+    "cos": 0.324,
+    "comment": "END_boundary",
+    "target_spk": 7,
+    "label": 2
+  },
+  {
+    "file": "FP2_peak_0.70-1.00s_cos0.198_MID.wav",
+    "fp_idx": 2,
+    "win_start": 0.7,
+    "win_end": 1.0,
+    "cos": 0.198,
+    "comment": "MID",
+    "target_spk": 7,
+    "label": 2
+  },
+  {
+    "file": "FP3_peak_0.75-1.05s_cos0.322_MID_clear_non_boundary.wav",
+    "fp_idx": 3,
+    "win_start": 0.75,
+    "win_end": 1.05,
+    "cos": 0.322,
+    "comment": "MID_clear_non_boundary",
+    "target_spk": 4,
+    "label": 3
+  },
+  {
+    "file": "FP3_peak_0.55-0.85s_cos0.276_MID.wav",
+    "fp_idx": 3,
+    "win_start": 0.55,
+    "win_end": 0.85,
+    "cos": 0.276,
+    "comment": "MID",
+    "target_spk": 4,
+    "label": 3
+  },
+  {
+    "file": "FP4_peak_1.25-1.55s_cos0.319_END_boundary.wav",
+    "fp_idx": 4,
+    "win_start": 1.25,
+    "win_end": 1.55,
+    "cos": 0.319,
+    "comment": "END_boundary",
+    "target_spk": 4,
+    "label": 2
+  },
+  {
+    "file": "FP4_peak_0.10-0.40s_cos0.198_START_boundary.wav",
+    "fp_idx": 4,
+    "win_start": 0.1,
+    "win_end": 0.4,
+    "cos": 0.198,
+    "comment": "START_boundary",
+    "target_spk": 4,
+    "label": 2
+  }
+]
