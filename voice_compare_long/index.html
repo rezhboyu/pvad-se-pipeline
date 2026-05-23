@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>長片段聲音對比 — PVAD</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;padding:20px;max-width:1100px;margin:0 auto}
+h1{font-size:1.5rem;margin-bottom:6px}
+.lead{color:var(--muted);font-size:13px;margin-bottom:18px}
+.stats{background:#1a2030;border-radius:8px;padding:12px;margin-bottom:18px;font-family:monospace;font-size:12px;color:#aaa;white-space:pre}
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.section h2{font-size:1rem;margin-bottom:10px;color:var(--accent)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;padding:10px;background:#151922;border-radius:8px}
+@media(max-width:680px){.pair{grid-template-columns:1fr}}
+.box{padding:8px}
+.box.target{border-left:3px solid var(--green)}
+.box.fp{border-left:3px solid var(--red)}
+.box.tp{border-left:3px solid var(--green)}
+.name{font-weight:600;font-size:13px;margin-bottom:6px}
+.cos{display:inline-block;background:#2a2d3a;border-radius:4px;padding:2px 8px;font-size:11px;font-family:monospace;color:var(--accent);margin-left:4px}
+.cos.veryhigh{background:#5a1e1e;color:#fca5a5}
+.cos.high{background:#5a3a1e;color:#fde68a}
+.cos.mid{background:#3a3a1e;color:#fbbf24}
+.cos.low{background:#1e3a2a;color:#86efac}
+audio{width:100%;height:38px;margin-top:4px}
+.note{background:#1a2030;border-left:3px solid var(--accent);padding:8px 12px;margin-top:8px;font-size:11.5px;color:#aaa}
+.lbl-tag{font-size:10px;background:#2a2d3a;color:#aaa;padding:1px 5px;border-radius:99px;margin-left:4px}
+.lbl-2{background:#5a2a1e;color:#fca5a5}
+.lbl-3{background:#5a3a1e;color:#fde68a}
+.meta{font-size:11px;color:var(--muted);margin-top:2px}
+</style>
+</head>
+<body>
+<h1>長片段聲音對比（1–3.7 秒，可清楚聽見）</h1>
+<p class="lead">從 newval_v3 的 random_switch 和 interleaved 類別（段落較長）抓出來。max_cos 是該段內 0.3s 滑動窗的最高分數（模型最容易誤判的瞬間）。</p>
+
+<div class="stats">非目標片段 (≥1s) 共 232 段，cosine 分佈：
+  max_cos 範圍: 0.36 (極端) ~ 0.10 (典型) ~ -0.10 (明顯不同)
+  mean_cos 範圍: 0.14 (極端) ~ 0.07 (中位數)
+
+→ 比 0.3s chunk-level 的 0.53 低很多
+→ 段落越長，平均下來模型越能分對</div>
+
+<div class="section">
+  <h2>① TOP-6 最高混淆度的長片段 (max_cos 最高)</h2>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:10px">這些片段內的某個 0.3s 瞬間，cos 衝到 0.30+，是 FP 主要來源。聽完整段，看看跟 target enrollment 多像。</p>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment <span class="meta">完整 30 秒</span></div>
+      <audio controls src="spk4_User1_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#1 vs spk4 <span class="cos high">max=0.360</span><span class="lbl-tag lbl-3">label 3</span></div>
+      <div class="meta">1.51 秒 / random_switch / 非目標說話人</div>
+      <audio controls src="FP_TOP01_max0.360_label3_target_spk4_dur1.5s.wav"></audio>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7) Enrollment <span class="meta">完整 60 秒</span></div>
+      <audio controls src="spk7_hsuan_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#2 vs spk7 <span class="cos high">max=0.325</span><span class="lbl-tag lbl-2">label 2 (同性別)</span></div>
+      <div class="meta">1.34 秒 / interleaved / 同性別非目標</div>
+      <audio controls src="FP_TOP02_max0.325_label2_target_spk7_dur1.3s.wav"></audio>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment</div>
+      <audio controls src="spk4_User1_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#3 vs spk4 <span class="cos high">max=0.321</span><span class="lbl-tag lbl-3">label 3</span></div>
+      <div class="meta">1.57 秒 / random_switch</div>
+      <audio controls src="FP_TOP03_max0.321_label3_target_spk4_dur1.6s.wav"></audio>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment</div>
+      <audio controls src="spk4_User1_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#4 vs spk4 <span class="cos high">max=0.319</span><span class="lbl-tag lbl-2">label 2</span></div>
+      <div class="meta">1.62 秒 / interleaved</div>
+      <audio controls src="FP_TOP04_max0.319_label2_target_spk4_dur1.6s.wav"></audio>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7) Enrollment</div>
+      <audio controls src="spk7_hsuan_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#5 vs spk7 <span class="cos high">max=0.314</span><span class="lbl-tag lbl-2">label 2</span></div>
+      <div class="meta">3.68 秒 / interleaved (最長段落)</div>
+      <audio controls src="FP_TOP05_max0.314_label2_target_spk7_dur3.7s.wav"></audio>
+    </div>
+  </div>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7) Enrollment</div>
+      <audio controls src="spk7_hsuan_enroll.wav"></audio>
+    </div>
+    <div class="box fp">
+      <div class="name">TOP#6 vs spk7 <span class="cos high">max=0.306</span><span class="lbl-tag lbl-2">label 2</span></div>
+      <div class="meta">3.09 秒 / interleaved</div>
+      <audio controls src="FP_TOP06_max0.306_label2_target_spk7_dur3.1s.wav"></audio>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>② 對照：TOP-5 真目標長片段 (TP, mean_cos 最高)</h2>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:10px">模型對 target 自己人的高品質片段。mean_cos 接近 0.5 表示模型很確定。</p>
+
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment</div>
+      <audio controls src="spk4_User1_enroll.wav"></audio>
+    </div>
+    <div class="box tp" id="tp1"></div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">spk4/spk7 Enrollment（參考）</div>
+      <audio controls src="spk4_User1_enroll.wav"></audio>
+    </div>
+    <div class="box tp" id="tp2"></div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">Enrollment 參考</div>
+      <audio controls src="spk7_hsuan_enroll.wav"></audio>
+    </div>
+    <div class="box tp" id="tp3"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>③ 典型非目標 (MID, 大多數長這樣)</h2>
+  <p style="color:var(--muted);font-size:12px;margin-bottom:10px">非目標片段的中位數樣本 — 應該聽起來明顯跟 target 不像。</p>
+  <div class="pair">
+    <div class="box target"><div class="name">spk4 enrollment</div><audio controls src="spk4_User1_enroll.wav"></audio></div>
+    <div class="box fp" id="mid1"></div>
+  </div>
+  <div class="pair">
+    <div class="box target"><div class="name">spk4 enrollment</div><audio controls src="spk4_User1_enroll.wav"></audio></div>
+    <div class="box fp" id="mid2"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>判讀</h2>
+  <div class="note">
+  <b>聽完問你自己這幾題：</b>
+  <ol style="padding-left:20px;margin-top:6px">
+    <li>TOP#1~6 vs target enrollment，你覺得「同一個人」嗎？</li>
+    <li>TOP#5 / TOP#6 那兩段比較長（3 秒以上），是不是聽得出來不同人？</li>
+    <li>MID 那些跟 target 比，差距明顯嗎？</li>
+  </ol>
+  <p style="margin-top:8px"><b>如果你聽得出來明顯不同 → 模型應該也能分對</b>，但 0.3s chunk 太短時偶爾混淆是必然。<br>
+  <b>如果有的真的很像 → CAM++ 在這些 case 上撐到 cos=0.36 已是極限</b>，要靠後處理（更長視窗、smoothing）來救。</p>
+  </div>
+</div>
+
+<script>
+// Inject TP and MID files dynamically (filenames have variable cos values)
+fetch('manifest.json').then(r=>r.json()).then(data=>{
+  const tps = data.filter(d=>d.kind==='TP').slice(0,3);
+  const mids = data.filter(d=>d.kind==='MID').slice(0,2);
+  tps.forEach((d,i)=>{
+    const el=document.getElementById('tp'+(i+1));
+    if(!el) return;
+    el.innerHTML=`<div class="name">TP#${i+1} spk${d.sid} <span class="cos low">mean=${d.mean_cos.toFixed(3)}</span></div>
+                  <div class="meta">${d.duration.toFixed(1)} 秒 / 目標說話人</div>
+                  <audio controls src="${d.file}"></audio>`;
+  });
+  mids.forEach((d,i)=>{
+    const el=document.getElementById('mid'+(i+1));
+    if(!el) return;
+    el.innerHTML=`<div class="name">MID FP <span class="cos low">max=${d.max_cos.toFixed(3)}</span></div>
+                  <div class="meta">${d.duration.toFixed(1)} 秒</div>
+                  <audio controls src="${d.file}"></audio>`;
+  });
+});
+</script>
+
+</body>
+</html>
