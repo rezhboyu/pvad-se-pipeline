@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>聲音相似度比對 — PVAD</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;padding:20px;max-width:1100px;margin:0 auto}
+h1{font-size:1.4rem;margin-bottom:8px}
+.lead{color:var(--muted);margin-bottom:24px;font-size:13px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.section h2{font-size:1rem;color:var(--accent);margin-bottom:10px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px}
+@media(max-width:680px){.pair{grid-template-columns:1fr}}
+.box{background:#151922;border:1px solid var(--border);border-radius:8px;padding:12px}
+.box .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.box .name{font-weight:600;font-size:13px;margin-bottom:8px}
+.box.target .name{color:var(--green)}
+.box.confuser .name{color:var(--red)}
+.box.cohort .name{color:var(--yellow)}
+audio{width:100%;margin-top:4px}
+.cos{display:inline-block;background:#2a2d3a;border-radius:4px;padding:2px 8px;font-size:12px;color:var(--accent);font-family:monospace;margin-left:8px}
+.cos.low{color:var(--green)}
+.cos.mid{color:var(--yellow)}
+.cos.high{color:var(--red)}
+.note{background:#1a2030;border-left:3px solid var(--accent);padding:8px 12px;margin-top:10px;font-size:12px;color:#aaa}
+.q{font-weight:600;margin-bottom:4px;color:var(--accent)}
+</style>
+</head>
+<body>
+<h1>PVAD 聲音相似度比對</h1>
+<p class="lead">用 CAM++ 算出的 cosine similarity 標在每組旁邊。請自己聽完判斷：模型「認為很像」的，你的耳朵是否同意？</p>
+
+<div class="section">
+  <h2>① 目標說話人 spk4 (User1) — 5 個 enrollment 取 2</h2>
+  <div class="pair">
+    <div class="box target">
+      <div class="label">Enrollment 1</div>
+      <div class="name">User1 (spk4)</div>
+      <audio controls src="spk4_User1_enroll_1.wav"></audio>
+    </div>
+    <div class="box target">
+      <div class="label">Enrollment 2</div>
+      <div class="name">User1 (spk4)<span class="cos">同人</span></div>
+      <audio controls src="spk4_User1_enroll_2.wav"></audio>
+    </div>
+  </div>
+  <div class="note">這兩段是同一個人 (User1)。模型內部 cos ≈ 0.94，標準差 0.04。</div>
+</div>
+
+<div class="section">
+  <h2>② 目標說話人 spk7 (hsuan) — 3 個 enrollment 取 2</h2>
+  <div class="pair">
+    <div class="box target">
+      <div class="label">Enrollment 1</div>
+      <div class="name">hsuan (spk7)</div>
+      <audio controls src="spk7_hsuan_enroll_1.wav"></audio>
+    </div>
+    <div class="box target">
+      <div class="label">Enrollment 2</div>
+      <div class="name">hsuan (spk7)<span class="cos">同人</span></div>
+      <audio controls src="spk7_hsuan_enroll_2.wav"></audio>
+    </div>
+  </div>
+  <div class="note">這兩段是同一個人 (hsuan)。模型內部 cos ≈ 0.92。</div>
+</div>
+
+<div class="section">
+  <h2>③ 真實干擾者：測試集裡的 non-target (spk10, spk12)</h2>
+  <p class="q">問題：這些 vs 目標 spk4/spk7 你覺得像嗎？</p>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment</div>
+      <audio controls src="spk4_User1_enroll_1.wav"></audio>
+    </div>
+    <div class="box confuser">
+      <div class="name">spk10 (非目標) <span class="cos mid">cos=0.28</span></div>
+      <audio controls src="nontarget_spk10_utt1.wav"></audio>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4) Enrollment</div>
+      <audio controls src="spk4_User1_enroll_2.wav"></audio>
+    </div>
+    <div class="box confuser">
+      <div class="name">spk12 (非目標) <span class="cos low">cos=0.01</span></div>
+      <audio controls src="nontarget_spk12_utt1.wav"></audio>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7) Enrollment</div>
+      <audio controls src="spk7_hsuan_enroll_1.wav"></audio>
+    </div>
+    <div class="box confuser">
+      <div class="name">spk10 (非目標) <span class="cos low">cos=0.13</span></div>
+      <audio controls src="nontarget_spk10_utt2.wav"></audio>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7) Enrollment</div>
+      <audio controls src="spk7_hsuan_enroll_2.wav"></audio>
+    </div>
+    <div class="box confuser">
+      <div class="name">spk12 (非目標) <span class="cos low">cos=0.11</span></div>
+      <audio controls src="nontarget_spk12_utt2.wav"></audio>
+    </div>
+  </div>
+  <div class="note">模型在 clean 條件下能把這些都分開（cos 0.01–0.28）。會混淆的主因是：(1) 加 noise 後 cosine 整體下降，(2) chunk-level 嵌入比 utterance-level 不穩。</div>
+</div>
+
+<div class="section">
+  <h2>④ AISHELL cohort 內部最像 spk4 的 — S0703 (cos=0.24)</h2>
+  <p class="q">問題：S0703 跟 User1 (spk4) 你覺得多像？</p>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4)</div>
+      <audio controls src="spk4_User1_enroll_1.wav"></audio>
+    </div>
+    <div class="box cohort">
+      <div class="name">AISHELL S0703 <span class="cos mid">cos=0.24</span></div>
+      <audio controls src="aishell_S0703_top_spk4_similar_utt1.wav"></audio>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">User1 (spk4)</div>
+      <audio controls src="spk4_User1_enroll_2.wav"></audio>
+    </div>
+    <div class="box cohort">
+      <div class="name">AISHELL S0421 <span class="cos mid">cos=0.23</span></div>
+      <audio controls src="aishell_S0421_2nd_spk4_similar_utt1.wav"></audio>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>⑤ AISHELL cohort 內部最像 spk7 的 — S0358 (cos=0.34)</h2>
+  <p class="q">問題：S0358 跟 hsuan (spk7) 你覺得多像？這是 cohort 裡 cos 最高的一筆。</p>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7)</div>
+      <audio controls src="spk7_hsuan_enroll_1.wav"></audio>
+    </div>
+    <div class="box cohort">
+      <div class="name">AISHELL S0358 <span class="cos high">cos=0.34</span></div>
+      <audio controls src="aishell_S0358_top_spk7_similar_utt1.wav"></audio>
+    </div>
+  </div>
+  <div class="pair">
+    <div class="box target">
+      <div class="name">hsuan (spk7)</div>
+      <audio controls src="spk7_hsuan_enroll_2.wav"></audio>
+    </div>
+    <div class="box cohort">
+      <div class="name">AISHELL S0510 <span class="cos mid">cos=0.25</span></div>
+      <audio controls src="aishell_S0510_2nd_spk7_similar_utt1.wav"></audio>
+    </div>
+  </div>
+  <div class="note">S0358 vs hsuan 是 cohort 340 人裡最像的一對（cos=0.34）。如果你聽起來不像，代表 CAM++ 嵌入空間運作正常 — embedding 之間的 0.34 距離已經夠模型區分。</div>
+</div>
+
+<div class="section">
+  <h2>判讀指引</h2>
+  <ul style="padding-left:20px;color:#aaa;font-size:13px">
+    <li>cos < 0.20：模型認為「明顯不同人」</li>
+    <li>cos 0.20–0.40：「不太像，但同性別/相似口音」</li>
+    <li>cos 0.40–0.65：「有可能是同一人但不確定」（noisy 條件常落在這）</li>
+    <li>cos > 0.65：「很可能同一人」</li>
+    <li>cos > 0.90：「幾乎確定同一人」</li>
+  </ul>
+  <div class="note" style="margin-top:14px">如果你聽完覺得 ③ 的 spk10/12 跟 spk4/7 確實不像，但模型 fixed_0.5s 全量 F1 只有 0.74 → 問題不在 embedding space，而在 noisy 條件下 cosine 信號變糊。</div>
+</div>
+
+</body>
+</html>
