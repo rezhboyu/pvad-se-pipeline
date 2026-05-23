@@ -1,0 +1,128 @@
+[
+  {
+    "file": "FP_TOP01_max0.360_label3_target_spk4_dur1.5s.wav",
+    "kind": "TOP",
+    "sid": 4,
+    "max_cos": 0.36031943559646606,
+    "mean_cos": 0.10440704226493835,
+    "label": 3,
+    "duration": 1.5069999999999997
+  },
+  {
+    "file": "FP_TOP02_max0.324_label2_target_spk7_dur1.3s.wav",
+    "kind": "TOP",
+    "sid": 7,
+    "max_cos": 0.32449042797088623,
+    "mean_cos": 0.110202856361866,
+    "label": 2,
+    "duration": 1.3350000000000009
+  },
+  {
+    "file": "FP_TOP03_max0.321_label3_target_spk4_dur1.6s.wav",
+    "kind": "TOP",
+    "sid": 4,
+    "max_cos": 0.3206094801425934,
+    "mean_cos": 0.08664094656705856,
+    "label": 3,
+    "duration": 1.569
+  },
+  {
+    "file": "FP_TOP04_max0.319_label2_target_spk4_dur1.6s.wav",
+    "kind": "TOP",
+    "sid": 4,
+    "max_cos": 0.3189506232738495,
+    "mean_cos": 0.0977187305688858,
+    "label": 2,
+    "duration": 1.6159999999999997
+  },
+  {
+    "file": "FP_TOP05_max0.314_label2_target_spk7_dur3.7s.wav",
+    "kind": "TOP",
+    "sid": 7,
+    "max_cos": 0.31362128257751465,
+    "mean_cos": 0.0974947065114975,
+    "label": 2,
+    "duration": 3.6849999999999996
+  },
+  {
+    "file": "FP_TOP06_max0.306_label2_target_spk7_dur3.1s.wav",
+    "kind": "TOP",
+    "sid": 7,
+    "max_cos": 0.3062167763710022,
+    "mean_cos": 0.06627816706895828,
+    "label": 2,
+    "duration": 3.09
+  },
+  {
+    "file": "FP_MID01_max0.197_label2_target_spk4_dur2.7s.wav",
+    "kind": "MID",
+    "sid": 4,
+    "max_cos": 0.19748398661613464,
+    "mean_cos": 0.0054268562234938145,
+    "label": 2,
+    "duration": 2.6640000000000006
+  },
+  {
+    "file": "FP_MID02_max0.197_label2_target_spk4_dur1.2s.wav",
+    "kind": "MID",
+    "sid": 4,
+    "max_cos": 0.19742873311042786,
+    "mean_cos": 0.0681631788611412,
+    "label": 2,
+    "duration": 1.2419999999999973
+  },
+  {
+    "file": "FP_MID03_max0.197_label2_target_spk7_dur2.0s.wav",
+    "kind": "MID",
+    "sid": 7,
+    "max_cos": 0.19683481752872467,
+    "mean_cos": 0.09474688768386841,
+    "label": 2,
+    "duration": 2.013
+  },
+  {
+    "file": "TP_TOP01_mean0.500_target_spk4_dur1.3s.wav",
+    "kind": "TP",
+    "sid": 4,
+    "max_cos": 0.64756840467453,
+    "mean_cos": 0.5002667307853699,
+    "label": null,
+    "duration": 1.2989999999999995
+  },
+  {
+    "file": "TP_TOP02_mean0.483_target_spk4_dur1.2s.wav",
+    "kind": "TP",
+    "sid": 4,
+    "max_cos": 0.5862292051315308,
+    "mean_cos": 0.4826124608516693,
+    "label": null,
+    "duration": 1.189
+  },
+  {
+    "file": "TP_TOP03_mean0.482_target_spk4_dur1.2s.wav",
+    "kind": "TP",
+    "sid": 4,
+    "max_cos": 0.5929790139198303,
+    "mean_cos": 0.48189306259155273,
+    "label": null,
+    "duration": 1.1679999999999975
+  },
+  {
+    "file": "TP_TOP04_mean0.463_target_spk7_dur1.2s.wav",
+    "kind": "TP",
+    "sid": 7,
+    "max_cos": 0.5564771890640259,
+    "mean_cos": 0.46294084191322327,
+    "label": null,
+    "duration": 1.174999999999999
+  },
+  {
+    "file": "TP_TOP05_mean0.463_target_spk4_dur1.1s.wav",
+    "kind": "TP",
+    "sid": 4,
+    "max_cos": 0.6647365093231201,
+    "mean_cos": 0.4626785218715668,
+    "label": null,
+    "duration": 1.079
+  }
+]
