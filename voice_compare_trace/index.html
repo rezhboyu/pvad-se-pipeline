@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FP 段落 + 完整上下文對比 — PVAD</title>
+<style>
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.6;padding:18px;max-width:1100px;margin:0 auto}
+h1{font-size:1.5rem;margin-bottom:6px}
+.lead{color:var(--muted);font-size:13px;margin-bottom:18px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px}
+.section h2{font-size:1rem;margin-bottom:8px;color:var(--accent)}
+.fp-block{background:#151922;border-radius:8px;padding:12px;margin-bottom:14px;border-left:3px solid var(--red)}
+.fp-block .title{font-weight:700;font-size:14px;margin-bottom:6px}
+.fp-block .meta{font-family:monospace;font-size:11px;color:var(--muted);margin-bottom:10px;white-space:pre-line}
+.audio-row{display:grid;grid-template-columns:120px 1fr;gap:10px;align-items:center;margin-bottom:6px}
+.audio-row .lbl{font-size:11px;color:var(--muted);font-weight:600;text-align:right}
+audio{width:100%;height:34px}
+.boundary{background:#1a2030;padding:6px 10px;border-radius:4px;font-family:monospace;font-size:11px;color:#aaa;margin-top:6px;white-space:pre}
+.boundary .fp-line{color:var(--red);font-weight:700}
+.boundary .tgt-line{color:var(--green)}
+.enroll-row{background:#1a2030;padding:10px;border-radius:8px;margin-bottom:10px;border-left:3px solid var(--green)}
+.note{background:#1a2030;border-left:3px solid var(--accent);padding:8px 12px;margin-top:8px;font-size:12px;color:#aaa}
+.cos-tag{display:inline-block;background:#2a2d3a;color:var(--accent);padding:2px 6px;border-radius:99px;font-family:monospace;font-size:11px;margin-left:6px}
+</style>
+</head>
+<body>
+<h1>FP 段落 + 完整上下文對比</h1>
+<p class="lead">每個 FP 提供三個版本：① <b>pure</b> = 純非目標段（GT 標的範圍）；② <b>wide</b> = FP±1 秒（含相鄰目標段，會聽到 target 聲音）；③ <b>full</b> = 完整 source 檔（看 GT JSON 對應）。先聽 pure，那才是模型真正被誤判的內容。</p>
+
+<div class="enroll-row">
+  <div class="audio-row">
+    <div class="lbl">User1 (spk4)</div>
+    <audio controls src="spk4_User1_enroll.wav"></audio>
+  </div>
+  <div class="audio-row">
+    <div class="lbl">hsuan (spk7)</div>
+    <audio controls src="spk7_hsuan_enroll.wav"></audio>
+  </div>
+</div>
+
+<div class="section">
+<h2>FP TOP#1 — target=spk4, label=3 (異性別非目標)</h2>
+<div class="fp-block">
+  <div class="title">max_cos=<span class="cos-tag">0.360</span> dur=1.51s / random_switch</div>
+  <div class="boundary"><span class="tgt-line">[10]  9.56–10.81s  label=1 (target)</span>
+<span class="fp-line">[11] 10.81–12.31s  label=3 (← THIS FP)</span>
+<span class="tgt-line">[12] 12.31–13.89s  label=1 (target)</span></div>
+  <div class="audio-row"><div class="lbl">① pure (FP only)</div><audio controls src="FP01_pure_dur1.5s_cos0.360.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">② wide (±1s)</div><audio controls src="FP01_wide_dur3.5s.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">③ full source</div><audio controls src="FP01_full_source.wav"></audio></div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP TOP#2 — target=spk7, label=2 (同性別非目標)</h2>
+<div class="fp-block">
+  <div class="title">max_cos=<span class="cos-tag">0.324</span> dur=1.34s / interleaved</div>
+  <div class="boundary"><span>[51] 20.58–20.75s  label=2</span>
+<span class="tgt-line">[52] 20.75–21.15s  label=1 (target)</span>
+<span class="fp-line">[53] 21.15–22.49s  label=2 (← THIS FP)</span>
+<span class="tgt-line">[54] 22.49–22.70s  label=1 (target)</span>
+<span>[55] 22.70–23.02s  label=3</span></div>
+  <div class="audio-row"><div class="lbl">① pure (FP only)</div><audio controls src="FP02_pure_dur1.3s_cos0.324.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">② wide (±1s)</div><audio controls src="FP02_wide_dur3.3s.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">③ full source</div><audio controls src="FP02_full_source.wav"></audio></div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP TOP#3 — target=spk4, label=3 (異性別非目標)</h2>
+<div class="fp-block">
+  <div class="title">max_cos=<span class="cos-tag">0.321</span> dur=1.57s / random_switch</div>
+  <div class="boundary"><span>[7] 6.64–7.37s  label=2</span>
+<span class="tgt-line">[8] 7.37–7.97s  label=1 (target)</span>
+<span class="fp-line">[9] 7.97–9.54s  label=3 (← THIS FP)</span>
+<span class="tgt-line">[10] 9.54–11.46s  label=1 (target)</span></div>
+  <div class="audio-row"><div class="lbl">① pure (FP only)</div><audio controls src="FP03_pure_dur1.6s_cos0.321.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">② wide (±1s)</div><audio controls src="FP03_wide_dur3.6s.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">③ full source</div><audio controls src="FP03_full_source.wav"></audio></div>
+</div>
+</div>
+
+<div class="section">
+<h2>FP TOP#4 — target=spk4, label=2 (同性別非目標)</h2>
+<div class="fp-block">
+  <div class="title">max_cos=<span class="cos-tag">0.319</span> dur=1.62s / interleaved (極緊密交錯)</div>
+  <div class="boundary"><span>[30] 14.16–14.95s  label=2</span>
+<span class="tgt-line">[31] 14.95–15.18s  label=1 (target, only 0.23s!)</span>
+<span class="fp-line">[32] 15.18–16.79s  label=2 (← THIS FP)</span>
+<span class="tgt-line">[33] 16.79–16.99s  label=1 (target, only 0.20s!)</span>
+<span>[34] 16.99–17.19s  label=2</span></div>
+  <div class="audio-row"><div class="lbl">① pure (FP only)</div><audio controls src="FP04_pure_dur1.6s_cos0.319.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">② wide (±1s)</div><audio controls src="FP04_wide_dur3.6s.wav"></audio></div>
+  <div class="audio-row"><div class="lbl">③ full source</div><audio controls src="FP04_full_source.wav"></audio></div>
+</div>
+</div>
+
+<div class="section">
+<h2>判讀</h2>
+<div class="note">
+<p><b>① pure 才是「真正的非目標段」</b> — 是 GT label 標為 label 2 或 3 的純非目標說話人 audio。如果這個版本聽起來跟 target enrollment 完全不像 → 模型不該誤判，是 chunk-level cosine 失準。</p>
+<p style="margin-top:6px"><b>② wide 包含相鄰 target 段</b>，所以一定聽得到 target 聲音 — 但那不是 FP 內容。</p>
+<p style="margin-top:6px"><b>③ full source</b> 是完整的混音檔（30+ 秒），可以聽出整個交錯 target 和非目標的結構。</p>
+<p style="margin-top:8px;color:var(--accent)"><b>FP#4 特別注意</b>：target segment 只有 0.20-0.23 秒，這種極短切換對 0.3s 窗口的 PVAD 是極端 case，邊界 bleed 不可避免。</p>
+</div>
+</div>
+
+</body>
+</html>
