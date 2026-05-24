@@ -63,6 +63,8 @@ svg{display:block;background:#0a0e13;border-radius:6px}
     <span><i style="background:#388bfd;opacity:.65"></i>預測=target</span>
     <span><i style="background:#bc8cff"></i>餘弦曲線</span>
     <span><i style="background:#39d0d8"></i>Ensemble 分數</span>
+    <span><i style="background:#888"></i>全域 thr (灰虛)</span>
+    <span><i style="background:#fb923c"></i>該檔最佳 thr (橘虛)</span>
   </div>
   <div class="row-stats" id="row-stats"></div>
 </div>
@@ -91,6 +93,8 @@ async function loadFile(fid) {
   document.getElementById('file-name').textContent = `${fid.replace(/_/g,' ')}`;
 
   // info grid
+  const pfBest = CURRENT.per_file_best_baseline_thr;
+  const globalThr = CURRENT.predictions['Baseline (F, sliding)'].thr;
   const info = [
     ['File', CURRENT.source],
     ['Speaker', `spk${CURRENT.spk} (${CURRENT.spk==4?'User1':'hsuan'})`],
@@ -99,6 +103,12 @@ async function loadFile(fid) {
     ['GT segments', CURRENT.gt_segments.length],
     ['P2 hypothesis', CURRENT.predictions['P2 Force-Alternate'].hypothesis],
   ];
+  if (pfBest) {
+    info.push(['Global thr', globalThr]);
+    info.push([`Oracle thr (this file)`, `${pfBest.thr.toFixed(3)} → F1=${pfBest.f1}`]);
+    const delta = (pfBest.thr - globalThr).toFixed(3);
+    info.push(['Δ thr', `${delta > 0 ? '+' : ''}${delta} (${pfBest.thr > globalThr ? '應提高' : '應降低'})`]);
+  }
   document.getElementById('info-grid').innerHTML = info.map(([k,v])=>
     `<div class="info-card"><div class="lab">${k}</div><div class="val">${v}</div></div>`).join('');
 
@@ -178,9 +188,17 @@ function drawTimeline() {
   const sld = CURRENT.sliding_cosine;
   const cosMin = -0.2, cosMax = 0.6;
   const cosY = v => cosTrack.y + cosTrack.h - ((v-cosMin)/(cosMax-cosMin))*cosTrack.h;
-  // threshold line at 0.075
+  // GLOBAL threshold line (gray dashed)
   const thrY = cosY(CURRENT.predictions['Baseline (F, sliding)'].thr);
-  svg.innerHTML += `<line x1="0" y1="${thrY}" x2="${W}" y2="${thrY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.5"/>`;
+  svg.innerHTML += `<line x1="0" y1="${thrY}" x2="${W}" y2="${thrY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.6"/>`;
+  svg.innerHTML += `<text x="${W-4}" y="${thrY-2}" font-size="9" fill="#888" text-anchor="end">global thr=${CURRENT.predictions['Baseline (F, sliding)'].thr}</text>`;
+  // PER-FILE BEST threshold line (orange dashed) — oracle
+  if (CURRENT.per_file_best_baseline_thr) {
+    const pfBest = CURRENT.per_file_best_baseline_thr;
+    const pfThrY = cosY(pfBest.thr);
+    svg.innerHTML += `<line x1="0" y1="${pfThrY}" x2="${W}" y2="${pfThrY}" stroke="#fb923c" stroke-dasharray="4,2" stroke-width="1.0" opacity="0.85"/>`;
+    svg.innerHTML += `<text x="${W-4}" y="${pfThrY-2}" font-size="9" fill="#fb923c" text-anchor="end" font-weight="600">oracle thr=${pfBest.thr.toFixed(3)} → F1=${pfBest.f1}</text>`;
+  }
   // smoothed
   let pathSm = '';
   for (let i=0; i<sld.times.length; i++) {
