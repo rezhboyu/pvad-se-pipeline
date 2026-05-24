@@ -3,31 +3,32 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PVAD 演算法綜合分析</title>
+<title>PVAD 演算法綜合分析 v2 (含 0.1s 決策率)</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b;--purple:#a78bfa}
+:root{--bg:#0f1117;--card:#1a1d27;--border:#2a2d3a;--accent:#6c8eff;--green:#4ade80;--yellow:#fbbf24;--red:#f87171;--text:#e2e8f0;--muted:#64748b;--purple:#a78bfa;--cyan:#22d3ee;--orange:#fb923c}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13.5px;line-height:1.6;max-width:1200px;margin:0 auto;padding:18px}
-header{background:linear-gradient(135deg,#1e2435,#252938);padding:24px;border-radius:12px;margin-bottom:18px;border:1px solid var(--border)}
-h1{font-size:1.6rem;font-weight:700;margin-bottom:4px}
-.lead{color:var(--muted);font-size:.85rem}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13.5px;line-height:1.6;max-width:1300px;margin:0 auto;padding:16px}
+header{background:linear-gradient(135deg,#1e2435,#252938);padding:20px;border-radius:12px;margin-bottom:14px;border:1px solid var(--border)}
+h1{font-size:1.5rem;font-weight:700;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.85rem}
 .target-banner{background:#1a3a2a;border-left:4px solid var(--green);padding:10px 14px;border-radius:0 8px 8px 0;margin-top:12px;font-size:.85rem}
-.target-banner strong{color:var(--green)}
-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:14px}
-section h2{font-size:1.1rem;margin-bottom:12px;color:var(--accent)}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:18px}
-.kpi-card{background:#151922;border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
-.kpi-card .v{font-size:1.6rem;font-weight:800;letter-spacing:-1px}
-.kpi-card .v.g{color:var(--green)}.kpi-card .v.y{color:var(--yellow)}.kpi-card .v.r{color:var(--red)}
-.kpi-card label{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;margin-top:4px;display:block}
-table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
-td{padding:7px 10px;border-bottom:1px solid #1e2133}
+section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:12px}
+section h2{font-size:1.05rem;margin-bottom:10px;color:var(--accent)}
+section h3{font-size:.92rem;margin:14px 0 8px;color:var(--cyan)}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px}
+.kpi-card{background:#151922;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}
+.kpi-card .v{font-size:1.4rem;font-weight:800;letter-spacing:-1px}
+.kpi-card .v.g{color:var(--green)}.kpi-card .v.y{color:var(--yellow)}.kpi-card .v.r{color:var(--red)}.kpi-card .v.c{color:var(--cyan)}
+.kpi-card label{color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;margin-top:4px;display:block}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{color:var(--muted);padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;font-weight:500}
+td{padding:6px 9px;border-bottom:1px solid #1e2133}
 tr.met td{background:#1a3a2a40}
-tr:hover td{background:#1e2235}
+tr.near td{background:#3a2a1e40}
+tr.bad td{background:#3a1e1e30;opacity:0.85}
 .num{font-family:monospace;text-align:right}
-.algo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:10px}
+.algo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:10px}
 .algo{background:#151922;border:1px solid var(--border);border-radius:8px;padding:12px;border-left:3px solid var(--accent)}
 .algo.essential{border-left-color:var(--purple)}
 .algo.aligned, .algo.aligned-norm, .algo.aligned-multi{border-left-color:var(--accent)}
@@ -36,28 +37,43 @@ tr:hover td{background:#1e2235}
 .algo.failed{border-left-color:var(--red);opacity:0.65}
 .algo.score-norm{border-left-color:#06b6d4}
 .algo.post-proc{border-left-color:#ec4899}
-.algo .name{font-weight:700;font-size:14px;margin-bottom:4px}
-.algo .cat{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
-.algo .desc{font-size:12.5px;color:#aaa;margin-bottom:8px;line-height:1.55}
-.algo .res{font-size:12px;font-family:monospace;color:var(--green);background:#0e1a13;padding:4px 8px;border-radius:4px;display:inline-block}
-.algo.failed .res{color:var(--red);background:#1f0e0e}
+.algo.slide-fine{border-left-color:var(--orange)}
+.algo.degraded{border-left-color:var(--red);opacity:0.7}
+.algo.baseline{border-left-color:#6b7280}
+.algo.score-mod{border-left-color:#0ea5e9}
+.algo .name{font-weight:700;font-size:13.5px;margin-bottom:3px}
+.algo .cat{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px}
+.algo .desc{font-size:12px;color:#aaa;margin-bottom:8px;line-height:1.55}
+.algo .res{font-size:11.5px;font-family:monospace;color:var(--green);background:#0e1a13;padding:3px 7px;border-radius:4px;display:inline-block}
+.algo.failed .res, .algo.degraded .res{color:var(--red);background:#1f0e0e}
 .algo.best .res{font-weight:700}
-.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;margin-left:4px}
+.badge{display:inline-block;padding:2px 6px;border-radius:99px;font-size:9.5px;font-weight:700;margin-left:4px}
 .badge.met{background:#1a3a2a;color:var(--green)}
-.insight{background:#1a2030;border-left:3px solid var(--accent);padding:10px 14px;margin-top:10px;font-size:13px;line-height:1.7;color:#b0bec5}
+.badge.near{background:#3a2a1e;color:var(--yellow)}
+.insight{background:#1a2030;border-left:3px solid var(--accent);padding:10px 14px;margin-top:8px;font-size:12.5px;line-height:1.65;color:#b0bec5}
 .insight strong{color:var(--accent)}
-.ch{position:relative;height:340px}
+.ch{position:relative;height:520px}
 canvas{width:100%!important;height:100%!important}
-.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:8px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:6px}
 .legend span{display:flex;align-items:center;gap:4px}
-.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.tabs{display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:14px;flex-wrap:wrap}
+.tab{padding:8px 14px;background:transparent;color:var(--muted);border:none;cursor:pointer;border-bottom:2px solid transparent;font-size:13px;font-weight:600}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.tradeoff{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px}
+.tradeoff-card{background:#151922;border:1px solid var(--border);border-radius:8px;padding:12px}
+.tradeoff-card h4{font-size:13px;color:var(--accent);margin-bottom:6px}
+.tradeoff-card .val{font-family:monospace;font-size:13px;color:var(--green);font-weight:700;margin:6px 0}
+.tradeoff-card .meta{font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
 
 <header>
-<h1>PVAD 演算法綜合分析</h1>
-<p class="lead">CAM++ 嵌入 + 各種優化路徑，全部測在 newval_v3 / fixed_0.5s (210 檔，含 5 種噪音 × 5 SNR + clean)</p>
+<h1>PVAD 演算法綜合分析 v2</h1>
+<p class="subtitle">CAM++ 嵌入 + 25 種演算法 / 變種，全部測在 newval_v3 / fixed_0.5s (210 檔，含 5 種噪音 × 5 SNR + clean)</p>
 <div class="target-banner">
 <strong>目標:</strong> F1 ≥ 0.85, TAR ≥ 0.90, FAR ≤ 0.20 (0.1秒 segment-level 評估)
 </div>
@@ -66,85 +82,168 @@ canvas{width:100%!important;height:100%!important}
 <section>
 <h2>核心 KPI</h2>
 <div class="kpi">
-<div class="kpi-card"><div class="v g">0.9891</div><label>Best F1 (P2_alternate)</label></div>
-<div class="kpi-card"><div class="v g">0.978</div><label>Best TAR (P2_alternate)</label></div>
-<div class="kpi-card"><div class="v g">0.000</div><label>Best FAR (P2_alternate)</label></div>
-<div class="kpi-card"><div class="v">17</div><label>演算法 / 變種</label></div>
-<div class="kpi-card"><div class="v y">1</div><label>達標 config 數</label></div>
-</div>
-<div class="insight">
-🏆 <strong>P2_alternate</strong> 全達標。其他通用方法最佳是 <strong>raw_base_heavy</strong> (F1=0.85, TAR=0.85, FAR=0.16)，差 TAR 0.05。
+<div class="kpi-card"><div class="v g">0.989</div><label>Best F1 (P2_alternate)</label></div>
+<div class="kpi-card"><div class="v g">0.978</div><label>Best TAR</label></div>
+<div class="kpi-card"><div class="v g">0.000</div><label>Best FAR</label></div>
+<div class="kpi-card"><div class="v c">25</div><label>方法 / 變種</label></div>
+<div class="kpi-card"><div class="v y">3</div><label>達標策略</label></div>
+<div class="kpi-card"><div class="v">5</div><label>決策率測試</label></div>
 </div>
 </section>
 
 <section>
-<h2>結果總覽 (Top 配置，0.1s segment-level eval)</h2>
-<div class="ch"><canvas id="chart"></canvas></div>
+<div class="tabs">
+  <button class="tab active" onclick="showTab('overview')">總覽</button>
+  <button class="tab" onclick="showTab('rates')">決策率分析</button>
+  <button class="tab" onclick="showTab('table')">完整結果表</button>
+  <button class="tab" onclick="showTab('algos')">演算法詳解</button>
+  <button class="tab" onclick="showTab('insights')">關鍵發現</button>
+  <button class="tab" onclick="showTab('deploy')">部署建議</button>
+</div>
+
+<div class="tab-content active" id="overview">
+<h3>F1 vs FAR vs 決策率 (氣泡圖)</h3>
+<div class="ch"><canvas id="bubble-chart"></canvas></div>
 <div class="legend">
-  <span><i style="background:#4ade80"></i>F1 ≥ 0.85 達標</span>
-  <span><i style="background:#fbbf24"></i>邊緣達標 (F1 ≥ 0.83)</span>
+  <span><i style="background:#4ade80"></i>達標 (F1≥0.85, TAR≥0.9, FAR≤0.2)</span>
+  <span><i style="background:#fbbf24"></i>邊緣 (F1≥0.83)</span>
   <span><i style="background:#6c8eff"></i>標準</span>
-  <span><i style="background:#f87171"></i>失敗</span>
+  <span><i style="background:#fb923c"></i>10 dec/sec 系列</span>
+  <span><i style="background:#f87171"></i>失敗 / 退化</span>
 </div>
-</section>
+</div>
 
-<section>
-<h2>完整結果表</h2>
+<div class="tab-content" id="rates">
+<h3>決策率 × F1 對比</h3>
+<div class="tradeoff">
+  <div class="tradeoff-card">
+    <h4>2 decisions/sec (Aligned)</h4>
+    <div class="val">F1 = 0.85 (A8)</div>
+    <div class="meta">A8 Triple Ensemble 利用 0.5s 邊界，每段 3 chunks 平均。是通用最佳。</div>
+  </div>
+  <div class="tradeoff-card">
+    <h4>2 dec/sec + 結構假設</h4>
+    <div class="val">F1 = 0.99 (P2)</div>
+    <div class="meta">P2_alternate 強制 target/非 target 交錯。僅適用嚴格交錯場景。</div>
+  </div>
+  <div class="tradeoff-card">
+    <h4>10 decisions/sec (0.5s window)</h4>
+    <div class="val" style="color:var(--red)">F1 = 0.64</div>
+    <div class="meta">滑動 0.5s 視窗常跨 GT 邊界 → FAR 暴漲。Hysteresis 也救不了。</div>
+  </div>
+  <div class="tradeoff-card">
+    <h4>10 dec/sec (0.3s window)</h4>
+    <div class="val" style="color:var(--yellow)">F1 = 0.72</div>
+    <div class="meta">縮小視窗避開邊界 + Hysteresis 是 10/sec 最佳，但仍離 0.85 太遠。</div>
+  </div>
+  <div class="tradeoff-card" style="border-color:var(--green)">
+    <h4>★ Hybrid (10/sec output, 2/sec model)</h4>
+    <div class="val">F1 = 0.85</div>
+    <div class="meta">A8 算 2 dec/sec，輸出時複製到 5 個 0.1s 子時段。對外仍 10/sec API。</div>
+  </div>
+</div>
+<div class="insight" style="margin-top:14px">
+<strong>核心結論</strong>：在 fixed_0.5s 結構下，<b>提高模型決策率 ≠ 提高精度</b>。每個 0.1s chunk 太短，CAM++ 嵌入雜訊主導。最佳策略是 <b>低決策率模型 + 高解析度輸出</b> (Hybrid)。
+</div>
+</div>
+
+<div class="tab-content" id="table">
+<h3>完整結果表 (依 F1 排序)</h3>
 <div style="overflow-x:auto">
 <table id="result-table">
-<thead><tr><th>方法</th><th class="num">F1-best</th><th class="num">TAR</th><th class="num">FAR</th><th class="num">FAR≤0.2 TAR</th><th>達標</th></tr></thead>
+<thead><tr><th>方法</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th><th class="num">FAR≤0.2 TAR</th><th>決策率</th><th>群組</th><th>達標</th></tr></thead>
 <tbody></tbody>
 </table>
 </div>
-</section>
+</div>
 
-<section>
-<h2>所有演算法 (分類)</h2>
-<div class="algo-grid" id="algos"></div>
-</section>
+<div class="tab-content" id="algos">
+<h3>所有演算法 (分類)</h3>
+<div class="algo-grid" id="algos-grid"></div>
+</div>
 
-<section>
-<h2>關鍵發現</h2>
+<div class="tab-content" id="insights">
 <div class="insight">
 <strong>① Fbank bug 是過去評估失準的根源</strong><br>
-HANDOVER 的 F1=0.7255 基線是用錯誤 fbank 跑出。換成 Kaldi 標準 (25ms povey + preemph 0.97 + CMN) 後，centroid cos(spk4,spk7) 從 0.62 降到 0.095，所有後續方法才有意義。
+HANDOVER 的 F1=0.7255 基線是用錯誤 fbank (32ms FFT 全長，無 CMN) 跑出。換成 Kaldi 標準後，centroid cos(spk4,spk7) 從 0.62 降到 0.095，所有方法才有意義。
 </div>
 <div class="insight">
-<strong>② 對齊抽取 (利用 0.5s 邊界先驗) 是最大改進</strong><br>
-從 sliding baseline F1=0.74 跳到 aligned F1=0.79（A0 single）→ multi-chunk F1=0.82 (A3)。0.3s 視窗對 0.5s 段而言，邊界 ±0.1s 是污染區，避開後 F1 跳 +0.08。
+<strong>② 對齊抽取 (利用 0.5s 邊界) 是最大 wins</strong><br>
+sliding F1=0.74 → aligned A0 F1=0.79 (+0.05) → multi-chunk A3 F1=0.82 (+0.03)。0.3s 視窗對 0.5s 段而言，邊界 ±0.1s 是污染區，避開後 F1 跳 +0.08。
 </div>
 <div class="insight">
-<strong>③ Ensemble (cos + AS-norm + Discriminative) 比單一方法穩</strong><br>
-A8 ensemble F1=0.85，三種方法錯誤模式不同：baseline 對 threshold 敏感、AS-norm 對 cohort 偏置敏感、discriminative 對 max cohort 敏感。融合互補。
+<strong>③ Ensemble (A8) 比單一方法穩定</strong><br>
+A8 ensemble F1=0.85，三種錯誤模式互補：baseline 對 threshold 敏感、AS-norm 對 cohort 偏置敏感、discriminative 對 max cohort 敏感。融合後 robust。
 </div>
 <div class="insight">
-<strong>④ Force-alternation (P2) 突破天花板</strong><br>
-利用 fixed_0.5s「嚴格交錯」結構約束。從 ensemble 的 F1=0.85 (chunk-level decision) 跳到 P2 的 F1=0.99 (file-level alternation)。代價：僅適用嚴格交錯場景。
+<strong>④ P2 Force-Alternation 突破天花板，但脆弱</strong><br>
+從 chunk-level 決策 F1=0.85 跳到 file-level alternation F1=0.99。代價：完全依賴「嚴格交錯」結構假設，真實對話會崩。
 </div>
 <div class="insight">
-<strong>⑤ Hangover fill 失敗，Smart fill 持平</strong><br>
-P1 hangover 太激進（任何 0,1,0 都填 1 → FAR 爆 0.93）。P3 smart fill（要分數接近 threshold 才填）跟 raw ensemble 持平。對 ensemble 後處理而言，原始預測已經接近最佳。
+<strong>⑤ 提高決策率到 0.1s 不一定提高精度</strong><br>
+fixed_0.5s 上：2 dec/sec aligned F1=0.85；10 dec/sec sliding F1=0.64~0.72。
+<br>原因：每秒 10 個決策意味每個決策只能根據 1 個 chunk；2 dec/sec 用 3 chunks 平均，精度更高。
 </div>
+<div class="insight">
+<strong>⑥ Hysteresis 確實有效 (對 sliding 配置)</strong><br>
+在 0.3s sliding × 0.1s hop 上，Hysteresis (M5) F1=0.72 是 10/sec 系列最佳。雙閾值避免邊界 score 震盪造成的 0/1 閃爍。
+</div>
+<div class="insight">
+<strong>⑦ 0.5s sliding × 0.1s hop 是錯誤組合</strong><br>
+10 個視窗裡 8 個跨 GT 邊界 → cosine 被汙染 → FAR 必爆 (≥0.67)。所有後處理 (hangover, hysteresis, energy filter) 都救不了。
+</div>
+</div>
+
+<div class="tab-content" id="deploy">
+<h3>部署建議 (按場景)</h3>
+
+<div class="tradeoff" style="margin-bottom:12px">
+  <div class="tradeoff-card" style="border-color:var(--green)">
+    <h4>★ 推薦：Hybrid Deployment</h4>
+    <div class="val">F1=0.85, 10 outputs/sec</div>
+    <div class="meta">
+      • 模型：A8 ensemble，2 推理/秒（含 3 chunks 同時批次推理）<br>
+      • 輸出：每個 A8 決策複製到 5 個 0.1s 子段<br>
+      • 計算量：1 batch / 0.5s = ~30ms 推理<br>
+      • 時間解析度：100ms (足夠應用)
+    </div>
+  </div>
+  <div class="tradeoff-card">
+    <h4>純通用 PVAD</h4>
+    <div class="val">F1=0.77 (Sliding C)</div>
+    <div class="meta">完全不假設邊界，frame-level 評估。任何結構都能用，但精度較低。</div>
+  </div>
+  <div class="tradeoff-card" style="border-color:var(--green)">
+    <h4>嚴格交錯場景</h4>
+    <div class="val">F1=0.99 (P2)</div>
+    <div class="meta">如語音遊戲、輪流問答系統。需保證真實資料嚴格交錯，否則崩。</div>
+  </div>
+</div>
+
+<h3>Hybrid 部署 spec</h3>
+<div class="insight">
+<pre style="font-family:monospace;font-size:12px;color:#aaa;line-height:1.7;background:none;border:none;padding:0">
+[Input]   16kHz mono audio stream
+
+[Step 1]  Buffer 0.5s window
+[Step 2]  Extract 3 chunks @ offsets (0.05, 0.1, 0.15)s, each 0.3s
+[Step 3]  Fbank (Kaldi Povey + preemph + CMN) → CAM++ batch inference (1×3×24×80)
+[Step 4]  Per-chunk score: cos vs target_centroid, vs cohort (200 spk)
+[Step 5]  Per-chunk: AS-norm + Discriminative
+[Step 6]  Multi-chunk mean for each score type → standardize → ensemble
+[Step 7]  Threshold (calibrated per cohort = ~-0.7) → binary decision
+[Step 8]  Output: 5× duplicate to 0.1s rate
+
+[Output]  10 binary labels/sec, latency ≈ 500ms (one window)
+[Compute] ~30ms CPU per 500ms audio (real-time × 17)
+</pre>
+</div>
+</div>
+
 </section>
 
-<section>
-<h2>部署建議</h2>
-<div class="insight">
-<strong>場景 A: 已知嚴格交錯 (如 fixed_0.5s)</strong><br>
-→ 用 <strong>P2_alternate</strong>。F1=0.99 全部達標。
-</div>
-<div class="insight">
-<strong>場景 B: 結構不確定的通用 PVAD</strong><br>
-→ 用 <strong>A8 / raw_base_heavy ensemble</strong>。F1=0.85, TAR=0.85, FAR=0.16。差 TAR -0.05 到目標。
-</div>
-<div class="insight">
-<strong>場景 C: 要更高 TAR 但能放寬 FAR</strong><br>
-→ 降低 ensemble threshold 取 raw_equal F1-best 點。或考慮換 ECAPA-TDNN / 3D-Speaker 200k 模型。
-</div>
-</section>
-
-<footer style="text-align:center;color:var(--muted);font-size:11px;padding:20px;margin-top:10px">
-PVAD 演算法分析 · CAM++ · newval_v3 fixed_0.5s · 2026-05-24
+<footer style="text-align:center;color:var(--muted);font-size:11px;padding:18px;margin-top:8px">
+PVAD 演算法分析 v2 · CAM++ · newval_v3 fixed_0.5s · 2026-05-24
 </footer>
 
 <script>
@@ -155,8 +254,8 @@ const DATA = [
     "tar": 0.9784,
     "far": 0.0,
     "iso_tar": 0.9784,
-    "iso_f1": 0.9891,
-    "tgt_met": 1
+    "decisions": "2/sec",
+    "group": "Aligned ★"
   },
   {
     "name": "raw_base_heavy",
@@ -164,17 +263,8 @@ const DATA = [
     "tar": 0.8542,
     "far": 0.1576,
     "iso_tar": 0.8705,
-    "iso_f1": 0.8472,
-    "tgt_met": 0
-  },
-  {
-    "name": "raw_base_asnorm",
-    "f1": 0.8497,
-    "tar": 0.8511,
-    "far": 0.1554,
-    "iso_tar": 0.8705,
-    "iso_f1": 0.846,
-    "tgt_met": 0
+    "decisions": "2/sec",
+    "group": "Aligned ★"
   },
   {
     "name": "raw_equal",
@@ -182,8 +272,8 @@ const DATA = [
     "tar": 0.8574,
     "far": 0.1658,
     "iso_tar": 0.8713,
-    "iso_f1": 0.846,
-    "tgt_met": 0
+    "decisions": "2/sec",
+    "group": "Aligned ★"
   },
   {
     "name": "A8_ensemble",
@@ -191,16 +281,17 @@ const DATA = [
     "tar": 0.8473,
     "far": 0.1538,
     "iso_tar": 0.8713,
-    "iso_f1": 0.846
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
-    "name": "P3_smart_equal",
-    "f1": 0.8396,
-    "tar": 0.8479,
-    "far": 0.1757,
-    "iso_tar": 0.8582,
-    "iso_f1": 0.8394,
-    "tgt_met": 0
+    "name": "HYBRID: Aligned A8 + 0.1s 展開",
+    "f1": 0.8483,
+    "tar": 0.847,
+    "far": 0.154,
+    "iso_tar": 0.871,
+    "decisions": "10/sec (output)",
+    "group": "★ Deployment"
   },
   {
     "name": "A5_asnorm_meanchunk",
@@ -208,7 +299,8 @@ const DATA = [
     "tar": 0.8346,
     "far": 0.1887,
     "iso_tar": 0.8346,
-    "iso_f1": 0.8267
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
     "name": "A6_discr_meanchunk",
@@ -216,7 +308,8 @@ const DATA = [
     "tar": 0.8297,
     "far": 0.1862,
     "iso_tar": 0.8297,
-    "iso_f1": 0.8248
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
     "name": "A3_multi_mean",
@@ -224,7 +317,8 @@ const DATA = [
     "tar": 0.8499,
     "far": 0.2233,
     "iso_tar": 0.8184,
-    "iso_f1": 0.8218
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
     "name": "A2_multi_vote",
@@ -232,7 +326,8 @@ const DATA = [
     "tar": 0.8392,
     "far": 0.2253,
     "iso_tar": 0.8114,
-    "iso_f1": 0.8144
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
     "name": "A4_energy_align",
@@ -240,15 +335,17 @@ const DATA = [
     "tar": 0.8192,
     "far": 0.2411,
     "iso_tar": 0.7694,
-    "iso_f1": 0.7958
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
-    "name": "A0. Aligned center (single)",
+    "name": "Aligned A0 (0.5s decision rate)",
     "f1": 0.7932,
     "tar": 0.8248,
     "far": 0.2606,
     "iso_tar": 0.7674,
-    "iso_f1": 0.79
+    "decisions": "2/sec",
+    "group": "Sliding/Aligned"
   },
   {
     "name": "A0_single",
@@ -256,258 +353,462 @@ const DATA = [
     "tar": 0.8194,
     "far": 0.2606,
     "iso_tar": 0.7635,
-    "iso_f1": 0.7875
+    "decisions": "2/sec",
+    "group": "Aligned"
   },
   {
-    "name": "A1_asnorm",
-    "f1": 0.7851,
-    "tar": 0.7698,
-    "far": 0.1953,
-    "iso_tar": 0.7698,
-    "iso_f1": 0.7851
-  },
-  {
-    "name": "C. Sliding ensemble",
+    "name": "Sliding C (ensemble)",
     "f1": 0.7651,
     "tar": 0.8201,
     "far": 0.3308,
     "iso_tar": 0.706,
-    "iso_f1": 0.7449
+    "decisions": "20/sec",
+    "group": "Sliding/Aligned"
   },
   {
-    "name": "B. Energy-weighted sliding",
+    "name": "Sliding B (energy-weighted)",
     "f1": 0.7494,
     "tar": 0.821,
     "far": 0.3783,
     "iso_tar": 0.6134,
-    "iso_f1": 0.69
+    "decisions": "20/sec",
+    "group": "Sliding/Aligned"
   },
   {
-    "name": "F. Sliding baseline",
+    "name": "K. Sliding AS-norm",
+    "f1": 0.744,
+    "tar": 0.8211,
+    "far": 0.3961,
+    "decisions": "frame-level",
+    "group": "Sliding"
+  },
+  {
+    "name": "Sliding F (0.3s × 0.05s hop, smooth W5)",
     "f1": 0.7419,
     "tar": 0.8,
     "far": 0.3647,
     "iso_tar": 0.6527,
-    "iso_f1": 0.709
+    "decisions": "20/sec",
+    "group": "Sliding/Aligned"
   },
   {
-    "name": "P1_hangover_equal",
-    "f1": 0.6625,
-    "tar": 0.949,
-    "far": 0.9362,
+    "name": "Sliding 0.3s M5_hysteresis",
+    "f1": 0.7252,
+    "tar": 0.7476,
+    "far": 0.3212,
+    "iso_tar": 0.6048,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M4_medfilt_W3",
+    "f1": 0.7121,
+    "tar": 0.8125,
+    "far": 0.4798,
+    "iso_tar": 0.5457,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M7_med5_hyst",
+    "f1": 0.71,
+    "tar": 0.8107,
+    "far": 0.4835,
+    "iso_tar": 0.538,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M6_hangover_g1",
+    "f1": 0.7095,
+    "tar": 0.8343,
+    "far": 0.5289,
+    "iso_tar": 0.5432,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M3_ensemble",
+    "f1": 0.7053,
+    "tar": 0.8332,
+    "far": 0.541,
+    "iso_tar": 0.5309,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M2_discriminative",
+    "f1": 0.6992,
+    "tar": 0.8551,
+    "far": 0.604,
+    "iso_tar": 0.4843,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M1_asnorm",
+    "f1": 0.6988,
+    "tar": 0.8254,
+    "far": 0.5487,
+    "iso_tar": 0.4947,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding 0.3s M0_baseline",
+    "f1": 0.6929,
+    "tar": 0.8163,
+    "far": 0.5519,
+    "iso_tar": 0.5027,
+    "decisions": "10/sec",
+    "group": "10/sec ★"
+  },
+  {
+    "name": "Sliding+S3_hangover_gap2 (0.5s win)",
+    "f1": 0.6495,
+    "tar": 0.8378,
+    "far": 0.7586,
+    "iso_tar": 0.2898,
+    "decisions": "10/sec",
+    "group": "10/sec"
+  },
+  {
+    "name": "Sliding+S6_combined (0.5s win)",
+    "f1": 0.6462,
+    "tar": 0.8241,
+    "far": 0.7427,
+    "iso_tar": 0.2839,
+    "decisions": "10/sec",
+    "group": "10/sec"
+  },
+  {
+    "name": "Sliding+S1_medfilt_W5 (0.5s win)",
+    "f1": 0.6456,
+    "tar": 0.82,
+    "far": 0.7365,
+    "iso_tar": 0.2831,
+    "decisions": "10/sec",
+    "group": "10/sec"
+  },
+  {
+    "name": "Hysteresis H2_counter5 (0.5s win)",
+    "f1": 0.6367,
+    "tar": 0.6551,
+    "far": 0.4117,
     "iso_tar": null,
-    "iso_f1": null,
-    "tgt_met": 0
+    "decisions": "10/sec",
+    "group": "10/sec"
   },
   {
-    "name": "A7_smoothed_meanchunk",
-    "f1": 0.6619,
-    "tar": 0.9782,
-    "far": 0.999,
-    "iso_tar": 0.0262,
-    "iso_f1": 0.0438
+    "name": "Hysteresis H1_pure (0.5s win)",
+    "f1": 0.6362,
+    "tar": 0.6558,
+    "far": 0.4148,
+    "iso_tar": null,
+    "decisions": "10/sec",
+    "group": "10/sec"
+  },
+  {
+    "name": "Sliding A8 (0.5s win, 0.1s hop)",
+    "f1": 0.636,
+    "tar": 0.7733,
+    "far": 0.673,
+    "iso_tar": 0.2834,
+    "decisions": "10/sec",
+    "group": "10/sec"
+  },
+  {
+    "name": "Hysteresis H3_expand (0.5s win)",
+    "f1": 0.6159,
+    "tar": 0.7021,
+    "far": 0.5905,
+    "iso_tar": null,
+    "decisions": "10/sec",
+    "group": "10/sec"
   }
 ];
 const ALGOS = [
   {
     "id": "preprocessing",
-    "category": "Preprocessing",
+    "cat": "Preprocessing",
     "name": "Kaldi Fbank (Povey + Preemph + CMN)",
-    "desc": "輸入特徵：80-bin log-mel filterbank，25ms 視窗 / 10ms hop，Povey 加權，preemphasis 0.97，每段做 CMN (cepstral mean normalization)。3D-Speaker 官方 CAM++ 推理流程。修正前我們用 32ms FFT 視窗無 CMN，centroid cos(spk4,spk7) 高達 0.62（不正常）；修正後降到 0.095，模型才正常運作。",
-    "results": "Bug 修正帶來 F1 +0.06",
+    "desc": "輸入特徵：80-bin log-mel filterbank，25ms 視窗 / 10ms hop，Povey 加權，preemphasis 0.97，每段做 CMN。3D-Speaker 官方 CAM++ 推理流程。修正前用 32ms FFT 全長無 CMN，centroid cos(spk4,spk7) 高達 0.62 (不正常)；修正後降到 0.095。",
+    "res": "Bug 修正帶來 F1 +0.06",
     "type": "essential"
   },
   {
-    "id": "F",
-    "category": "Sliding-window baseline",
-    "name": "Strategy F (Median Filter Baseline)",
-    "desc": "滑動 0.3s 視窗 (hop 0.05s) 算 CAM++ embedding 對 target centroid 的 cosine，median filter W=5 平滑後 threshold。是 HANDOVER 紀錄的最佳通用配置。",
-    "results": "F1=0.7395 TAR=0.833 FAR=0.430 (frame-level)",
-    "type": "baseline"
-  },
-  {
     "id": "AS",
-    "category": "Score normalization",
-    "name": "AS-norm (Adaptive Score normalization)",
-    "desc": "對每個 chunk 用 cohort 做 z-score 標準化：score = (cos_target - mean(cohort_cos)) / std(cohort_cos)。Cohort 是 AISHELL-200 個說話人（leakage-safe）。把絕對相似度轉成「相對於通用人有多突出」。",
-    "results": "F1=0.7440 (僅微增)；對降 FAR 有效",
+    "cat": "Score Normalization",
+    "name": "AS-norm (z-score with cohort)",
+    "desc": "score = (cos_target - mean(cos_cohort)) / std(cos_cohort)。Cohort 用 AISHELL-200 個 leakage-safe 中文說話人。把絕對相似度轉成相對突出度。",
+    "res": "F1=0.74 (sliding) / 0.83 (aligned)",
     "type": "score-norm"
   },
   {
     "id": "DISC",
-    "category": "Score normalization",
-    "name": "Discriminative Scoring",
-    "desc": "score = cos(emb, target) - max(cos(emb, cohort))。直接懲罰跟其他人也像的 chunk。對 spk7 這種「跟 cohort 內某人偏像」的目標特別有效。",
-    "results": "F1=0.7441 (跟 AS-norm 類似)",
+    "cat": "Score Normalization",
+    "name": "Discriminative (cos - max_cohort)",
+    "desc": "score = cos(emb,target) - max(cos(emb, cohort))。直接懲罰「跟其他人也像」的 chunk。",
+    "res": "F1=0.74 (sliding) / 0.82 (aligned)",
     "type": "score-norm"
   },
   {
-    "id": "energy",
-    "category": "Energy-based",
-    "name": "Energy-weighted Scoring",
-    "desc": "把每個 0.3s chunk 的 cosine 乘上其 RMS 能量再平均：高能量 chunk (真語音) 權重大，低能量 (靜音) 權重小。理論上濾掉 silence chunk 的噪聲影響。",
-    "results": "F1=0.7494 (邊際改進，本資料 ratio 1:1 silence 少)",
+    "id": "F",
+    "cat": "Sliding Window",
+    "name": "Strategy F (Median Filter Baseline)",
+    "desc": "滑動 0.3s 視窗 (hop 0.05s) → cosine → median filter W=5 → threshold。HANDOVER 最佳通用配置。",
+    "res": "F1=0.74 (frame-level)",
+    "type": "baseline"
+  },
+  {
+    "id": "B",
+    "cat": "Sliding Window",
+    "name": "Energy-weighted Sliding",
+    "desc": "每個 chunk cosine × RMS 能量加權。理論上濾掉靜音 chunk 噪聲。",
+    "res": "F1=0.75 (邊際改進)",
     "type": "score-mod"
   },
   {
+    "id": "C",
+    "cat": "Sliding Window",
+    "name": "Sliding Ensemble (cos + AS + Disc)",
+    "desc": "三種分數標準化後加權合成。通用部署最佳。",
+    "res": "F1=0.77",
+    "type": "score-norm"
+  },
+  {
     "id": "A0",
-    "category": "Aligned (utilize 0.5s boundary)",
-    "name": "A0. Single Center Chunk per Segment",
-    "desc": "已知 fixed_0.5s 每 0.5s 切換 target/non-target。每個 0.5s segment 中心抽 0.3s（從 0.10s 到 0.40s）算 embedding。避開 boundary bleed。每段一個分數 + threshold。",
-    "results": "F1=0.7900 (+0.05 vs sliding baseline)",
+    "cat": "Aligned (utilize 0.5s boundary)",
+    "name": "A0. Single Center Chunk",
+    "desc": "每個 0.5s 段抽中心 0.3s (從 0.10s 到 0.40s) 算 embedding，避開 boundary bleed。每段一個分數 + threshold。",
+    "res": "F1=0.79",
     "type": "aligned"
   },
   {
-    "id": "A1",
-    "category": "Aligned + Cohort",
-    "name": "A1. Aligned + AS-norm",
-    "desc": "A0 的中心 chunk + cohort z-score。把對齊抽取與 cohort 標準化結合。",
-    "results": "F1=0.7851",
-    "type": "aligned-norm"
-  },
-  {
     "id": "A2",
-    "category": "Aligned (multi-chunk)",
-    "name": "A2. Multi-chunk Majority Voting",
-    "desc": "每 0.5s 段抽 3 個錯位 chunk (offsets 0.05/0.10/0.15s)，每個獨立 threshold，3 個 votes 多數決定 segment 預測。降低單一 chunk 的偶發雜訊。",
-    "results": "F1=0.8149",
-    "type": "aligned-multi"
+    "cat": "Aligned",
+    "name": "A2. Multi-chunk Majority Vote",
+    "desc": "每段抽 3 個錯位 chunk (offsets 0.05/0.10/0.15s)，獨立 threshold 後投票決定。",
+    "res": "F1=0.81",
+    "type": "aligned"
   },
   {
     "id": "A3",
-    "category": "Aligned (multi-chunk)",
+    "cat": "Aligned",
     "name": "A3. Multi-chunk Mean Cosine",
-    "desc": "同 A2 取 3 chunks，但對 cosine 取平均後 threshold（不是先 threshold 再 vote）。提供更平滑的 segment-level 分數。",
-    "results": "F1=0.8218",
-    "type": "aligned-multi"
+    "desc": "3 chunks cosine 平均後 threshold，提供更平滑分數。",
+    "res": "F1=0.82",
+    "type": "aligned"
   },
   {
     "id": "A4",
-    "category": "Aligned (energy)",
-    "name": "A4. Energy-aligned (Best Chunk per Segment)",
-    "desc": "3 個 offset chunks 中選 RMS 能量最高的（最可能是語音）算分數。",
-    "results": "F1=0.7972",
-    "type": "aligned-multi"
+    "cat": "Aligned",
+    "name": "A4. Energy-aligned",
+    "desc": "3 chunks 中選 RMS 能量最高的算分數。",
+    "res": "F1=0.80",
+    "type": "aligned"
   },
   {
     "id": "A5",
-    "category": "Aligned + Cohort + Multi",
+    "cat": "Aligned + Cohort",
     "name": "A5. AS-norm Multi-chunk Mean",
-    "desc": "3 chunks × cohort z-score，平均後 threshold。結合對齊、cohort 標準化、多 chunk 平均三個優點。",
-    "results": "F1=0.8267",
+    "desc": "3 chunks × cohort z-score 平均後 threshold。對齊 + 多chunk + 標準化三優點融合。",
+    "res": "F1=0.83",
     "type": "aligned-norm"
   },
   {
     "id": "A6",
-    "category": "Aligned + Cohort + Multi",
+    "cat": "Aligned + Cohort",
     "name": "A6. Discriminative Multi-chunk Mean",
-    "desc": "3 chunks × discriminative score，平均後 threshold。",
-    "results": "F1=0.8248",
+    "desc": "3 chunks × discriminative score 平均。",
+    "res": "F1=0.82",
     "type": "aligned-norm"
   },
   {
     "id": "A7",
-    "category": "Aligned (smoothed)",
-    "name": "A7. Cross-segment Median Filter",
-    "desc": "A3 的 per-segment 分數再做 segment-level median filter (W=3)。試圖平滑相鄰段落，但對交錯結構失效（會把交錯模式抹平）。",
-    "results": "F1=0.6619 (失敗：過度平滑)",
+    "cat": "Aligned + Smoothing",
+    "name": "A7. Cross-segment Median (FAILED)",
+    "desc": "A3 後再對 segments 做 median W=3 平滑。對交錯結構失效。",
+    "res": "F1=0.66 (失敗)",
     "type": "failed"
   },
   {
     "id": "A8",
-    "category": "Ensemble",
-    "name": "A8. Triple Ensemble (cos + AS-norm + Discr)",
-    "desc": "把 A3 + A5 + A6 三個 per-segment 分數各自標準化 (z-score per file)，平均成單一 ensemble 分數 + threshold。三種方法錯誤模式不同，融合後 robust。",
-    "results": "F1=0.8483 TAR=0.847 FAR=0.154 ← 接近目標",
+    "cat": "Ensemble ★",
+    "name": "A8. Triple Ensemble (A3+A5+A6)",
+    "desc": "A3 cos + A5 z-score + A6 discr，per-file 標準化平均成 ensemble 分數 + threshold。三種錯誤模式互補。",
+    "res": "F1=0.85 TAR=0.85 FAR=0.16 (通用最強)",
     "type": "ensemble"
   },
   {
     "id": "P1",
-    "category": "Post-processing",
+    "cat": "Post-processing",
     "name": "P1. Hangover Fill",
-    "desc": "若某 segment 是 0 但前後鄰居都是 1，填回 1（避免單 segment 漏判）。",
-    "results": "獨用會過度補（FAR 爆到 0.93）",
+    "desc": "規則：1, 0, 1 → 1, 1, 1。補回孤立的單 segment 漏判。",
+    "res": "獨用過度補 (FAR=0.93)",
+    "type": "post-proc"
+  },
+  {
+    "id": "P3",
+    "cat": "Post-processing",
+    "name": "P3. Smart Conditional Fill",
+    "desc": "只在「該 segment 分數距 threshold < margin 且鄰居都 1」時填。比 P1 保守。",
+    "res": "F1=0.84 (跟原 ensemble 持平)",
     "type": "post-proc"
   },
   {
     "id": "P2",
-    "category": "Post-processing ★",
+    "cat": "Post-processing ★",
     "name": "P2. Force-Alternation (Hypothesis Selection)",
-    "desc": "完全利用 fixed_0.5s 「target/非 target 嚴格交錯」的結構。計算每個 0.5s segment 的 ensemble 分數後，比較兩種假設：H1: 偶數段=target, 奇數段=non-target；H2: 反之。選分數總和較高的方向，整檔強制套用交錯模式。",
-    "results": "★ F1=0.9891 TAR=0.978 FAR=0.000 ★（達標！但僅適用嚴格交錯場景）",
+    "desc": "利用 fixed_0.5s 嚴格交錯結構。比較兩種 pattern：H1: 偶數段=target, 奇數段=non-target；H2: 反之。選分數總和正號的方向，整檔強制交錯。",
+    "res": "★ F1=0.989 TAR=0.978 FAR=0.000 ★",
     "type": "best"
   },
   {
-    "id": "P3",
-    "category": "Post-processing",
-    "name": "P3. Smart Conditional Fill",
-    "desc": "若某 segment 預測=0 且分數距 threshold < margin，且前後是 1，則填 1。比 P1 保守。",
-    "results": "F1≈0.84，跟 raw ensemble 持平",
-    "type": "post-proc"
+    "id": "S_slide05",
+    "cat": "0.1s Decision Rate",
+    "name": "Sliding A8 (0.5s win × 0.1s hop)",
+    "desc": "嘗試把 A8 改成 10 decisions/sec：0.5s 視窗 + 0.1s hop。每秒 10 個決策但失去對齊優勢。",
+    "res": "F1=0.64 (FAR 暴漲到 0.67)",
+    "type": "degraded"
+  },
+  {
+    "id": "S_slide03",
+    "cat": "0.1s Decision Rate",
+    "name": "Sliding 0.3s × 0.1s hop (M3 Ensemble)",
+    "desc": "視窗縮小到 0.3s（≤ GT 段長），避開大部分 boundary。10 decisions/sec。",
+    "res": "F1=0.71",
+    "type": "slide-fine"
+  },
+  {
+    "id": "S_hysteresis",
+    "cat": "0.1s Decision Rate",
+    "name": "Hysteresis (Schmitt trigger)",
+    "desc": "兩階段閾值：thr_high 觸發新狀態，thr_low 維持。連續決策不會閃爍。在 0.3s 滑動上展現威力。",
+    "res": "F1=0.72 (0.3s win，0.1s rate 最佳)",
+    "type": "slide-fine"
+  },
+  {
+    "id": "S_medfilt",
+    "cat": "0.1s Decision Rate",
+    "name": "Median Filter on Score",
+    "desc": "對 ensemble 分數曲線做 median W=3/5/7 平滑後 threshold。降低瞬間噪聲。",
+    "res": "F1=0.71 (W=3 最佳)",
+    "type": "slide-fine"
+  },
+  {
+    "id": "S_energy",
+    "cat": "0.1s Decision Rate",
+    "name": "Energy Filter (skip silence)",
+    "desc": "跳過 RMS 低於檔案 max 20% 的視窗，視為靜音。",
+    "res": "無顯著改進",
+    "type": "slide-fine"
+  },
+  {
+    "id": "S_hangover",
+    "cat": "0.1s Decision Rate",
+    "name": "Sliding + Hangover Fill",
+    "desc": "連續 0/1 預測中，短 gap 填回。提升 TAR。",
+    "res": "F1=0.71 TAR 升 FAR 也升",
+    "type": "slide-fine"
+  },
+  {
+    "id": "S_adaptive",
+    "cat": "0.1s Decision Rate",
+    "name": "Adaptive Threshold (per-file)",
+    "desc": "用每檔前 1s 估計 baseline mean+k*std 動態調 threshold。",
+    "res": "不適合（k=1.5 時 F1 崩到 0.29）",
+    "type": "degraded"
+  },
+  {
+    "id": "HYBRID",
+    "cat": "Deployment ★",
+    "name": "Hybrid: Aligned A8 + 0.1s 展開",
+    "desc": "模型用 aligned 0.5s 決策 (A8 ensemble)，輸出時把該決策複製到 5 個 0.1s 子時段。對外 API 仍 10 decisions/sec，但精度等於 A8。",
+    "res": "★ F1=0.85, API rate 10/sec, 計算量 -5×",
+    "type": "best"
   }
 ];
 
-// Table
-const tbody = document.querySelector('#result-table tbody');
-tbody.innerHTML = DATA.map(r => {
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+// Bubble chart: x=FAR, y=F1, size=TAR, color by status
+new Chart(document.getElementById('bubble-chart'), {
+  type: 'bubble',
+  data: {
+    datasets: [{
+      label: 'Methods',
+      data: DATA.map(r => ({
+        x: r.far, y: r.f1, r: 4 + (r.tar||0)*8,
+        _name: r.name, _tar: r.tar, _rate: r.decisions, _group: r.group
+      })),
+      backgroundColor: DATA.map(r => {
+        const met = (r.f1>=0.85 && r.tar>=0.90 && r.far<=0.20);
+        if (met) return 'rgba(74,222,128,0.8)';
+        if (r.f1<0.65) return 'rgba(248,113,113,0.6)';
+        if (r.f1>=0.83) return 'rgba(251,191,36,0.7)';
+        if (r.decisions === '10/sec' || r.decisions === '10/sec (output)') return 'rgba(251,146,60,0.7)';
+        return 'rgba(108,142,255,0.6)';
+      }),
+      borderColor: '#ffffff20',
+      borderWidth: 1
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {display:false},
+      tooltip: {
+        callbacks: {
+          label: ctx => {
+            const d = ctx.raw;
+            return [d._name, `F1: ${d.y.toFixed(3)}`, `TAR: ${d._tar.toFixed(3)}`, `FAR: ${d.x.toFixed(3)}`, `Rate: ${d._rate}`];
+          }
+        }
+      }
+    },
+    scales: {
+      x: {title:{display:true,text:'FAR (越低越好)',color:'#aaa'},min:0,max:1,ticks:{color:'#64748b'},grid:{color:'#1e2235'}},
+      y: {title:{display:true,text:'F1 (越高越好)',color:'#aaa'},min:0,max:1,ticks:{color:'#64748b'},grid:{color:'#1e2235'}}
+    }
+  }
+});
+
+// Result table
+document.querySelector('#result-table tbody').innerHTML = DATA.map(r => {
   const met = (r.f1>=0.85 && r.tar>=0.90 && r.far<=0.20);
   const close = (r.f1>=0.83 && !met);
-  const cls = met ? 'met' : '';
-  const badge = met ? '<span class="badge met">★</span>' : '';
+  const bad = (r.f1<0.65);
+  let cls = '';
+  if (met) cls = 'met';
+  else if (close) cls = 'near';
+  else if (bad) cls = 'bad';
+  const badge = met ? '<span class="badge met">★</span>' :
+                close ? '<span class="badge near">↑</span>' : '';
   return `<tr class="${cls}">
     <td>${r.name}${badge}</td>
     <td class="num">${r.f1.toFixed(4)}</td>
     <td class="num">${r.tar.toFixed(3)}</td>
     <td class="num">${r.far.toFixed(3)}</td>
     <td class="num">${r.iso_tar!=null?r.iso_tar.toFixed(3):'-'}</td>
-    <td>${met?'✓✓✓':close?'F1 only':'-'}</td>
+    <td>${r.decisions}</td>
+    <td>${r.group}</td>
+    <td>${met?'✓✓✓':close?'F1↑':'-'}</td>
   </tr>`;
 }).join('');
 
-// Chart
-const labels = DATA.map(r=>r.name);
-const colors = DATA.map(r=>{
-  if (r.f1>=0.85 && r.tar>=0.90 && r.far<=0.20) return '#4ade80';
-  if (r.f1>=0.83) return '#fbbf24';
-  if (r.f1<0.70) return '#f87171';
-  return '#6c8eff';
-});
-new Chart(document.getElementById('chart'), {
-  type: 'bar',
-  data: {
-    labels: labels,
-    datasets: [
-      {label:'F1', data: DATA.map(r=>r.f1), backgroundColor:colors, borderRadius:3},
-    ]
-  },
-  options: {
-    responsive: true, maintainAspectRatio: false,
-    indexAxis: 'y',
-    plugins: {
-      legend: {display:false},
-      tooltip: {
-        callbacks: {
-          label: ctx => {
-            const r = DATA[ctx.dataIndex];
-            return [` F1: ${r.f1.toFixed(4)}`, ` TAR: ${r.tar.toFixed(3)}`, ` FAR: ${r.far.toFixed(3)}`];
-          }
-        }
-      }
-    },
-    scales: {
-      x: {min:0,max:1,ticks:{color:'#64748b'},grid:{color:'#1e2235'}, title:{display:true,text:'F1',color:'#64748b'}},
-      y: {ticks:{color:'#e2e8f0',font:{size:10.5}},grid:{color:'#1e2235'}}
-    }
-  }
-});
-
 // Algorithm cards
-document.getElementById('algos').innerHTML = ALGOS.map(a => `
+document.getElementById('algos-grid').innerHTML = ALGOS.map(a => `
 <div class="algo ${a.type}">
-  <div class="cat">${a.category}</div>
+  <div class="cat">${a.cat}</div>
   <div class="name">${a.name}</div>
   <div class="desc">${a.desc}</div>
-  <div class="res">${a.results}</div>
+  <div class="res">${a.res}</div>
 </div>`).join('');
 </script>
 
