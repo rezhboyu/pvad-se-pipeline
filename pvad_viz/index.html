@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PVAD 預測疊加可視化</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--border:#21262d;--accent:#388bfd;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;--cyan:#39d0d8;--text:#e6edf3;--muted:#8b949e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding:14px;max-width:1300px;margin:0 auto}
+header{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+h1{font-size:1.3rem;margin-bottom:4px}
+.lead{color:var(--muted);font-size:.85rem}
+.controls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px}
+select{background:#0d1117;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%}
+audio{width:100%;height:36px}
+.viz{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:10px}
+.viz h2{font-size:.95rem;color:var(--accent);margin-bottom:8px}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px}
+.info-card{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:8px 10px}
+.info-card .lab{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.info-card .val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
+.timeline-wrap{position:relative;width:100%;overflow-x:auto}
+svg{display:block;background:#0a0e13;border-radius:6px}
+.track-label{font-size:11px;fill:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{width:14px;height:10px;display:inline-block;border-radius:2px}
+.row-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat-card{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center}
+.stat-card .name{font-size:11px;color:var(--muted)}
+.stat-card .nums{font-family:monospace;font-size:11.5px;margin-top:3px}
+.stat-card .nums b{font-size:13px}
+.stat-card.match{border-color:var(--green)}
+.stat-card.miss{border-color:var(--red)}
+.cursor-line{stroke:#fff;stroke-width:1.5;opacity:0.7}
+</style>
+</head>
+<body>
+
+<header>
+<h1>PVAD 預測疊加可視化</h1>
+<p class="lead">每個檔案疊圖：波形 + GT 標籤 + 三種方法預測 + 餘弦曲線 + ensemble 分數。CAM++ on newval_v3/fixed_0.5s。</p>
+</header>
+
+<div class="controls">
+  <select id="file-select"></select>
+  <div style="font-size:11px;color:var(--muted)">12 個代表性檔案</div>
+</div>
+
+<div class="viz">
+  <h2 id="file-name">Loading...</h2>
+  <div class="info-grid" id="info-grid"></div>
+  <audio id="audio" controls></audio>
+  <div class="timeline-wrap">
+    <svg id="timeline" width="1200" height="380"></svg>
+  </div>
+  <div class="legend">
+    <span><i style="background:#3fb950"></i>label 1 = target</span>
+    <span><i style="background:#f85149"></i>label 2 = 同性別非目標</span>
+    <span><i style="background:#d29922"></i>label 3 = 異性別非目標</span>
+    <span><i style="background:#21262d"></i>label 0 = 靜音</span>
+    <span><i style="background:#388bfd;opacity:.65"></i>預測=target</span>
+    <span><i style="background:#bc8cff"></i>餘弦曲線</span>
+    <span><i style="background:#39d0d8"></i>Ensemble 分數</span>
+  </div>
+  <div class="row-stats" id="row-stats"></div>
+</div>
+
+<script>
+const LABEL_COLORS = {0:'#21262d', 1:'#3fb950', 2:'#f85149', 3:'#d29922'};
+const METHOD_COLORS = {'Baseline (F, sliding)':'#388bfd', 'A8 Ensemble (aligned)':'#bc8cff', 'P2 Force-Alternate':'#39d0d8'};
+
+let MANIFEST = [];
+let CURRENT = null;
+let AUDIO = document.getElementById('audio');
+
+async function loadManifest() {
+  const r = await fetch('manifest.json');
+  MANIFEST = await r.json();
+  const sel = document.getElementById('file-select');
+  sel.innerHTML = MANIFEST.map((m,i) => `<option value="${m.file_id}">${i+1}. ${m.file_id.replace(/_/g,' ')} (${m.duration_s}s)</option>`).join('');
+  sel.addEventListener('change', () => loadFile(sel.value));
+  loadFile(MANIFEST[0].file_id);
+}
+
+async function loadFile(fid) {
+  const r = await fetch(`${fid}.json`);
+  CURRENT = await r.json();
+  AUDIO.src = `${fid}.wav`;
+  document.getElementById('file-name').textContent = `${fid.replace(/_/g,' ')}`;
+
+  // info grid
+  const info = [
+    ['File', CURRENT.source],
+    ['Speaker', `spk${CURRENT.spk} (${CURRENT.spk==4?'User1':'hsuan'})`],
+    ['Condition', CURRENT.condition],
+    ['Duration', `${CURRENT.duration_s}s`],
+    ['GT segments', CURRENT.gt_segments.length],
+    ['P2 hypothesis', CURRENT.predictions['P2 Force-Alternate'].hypothesis],
+  ];
+  document.getElementById('info-grid').innerHTML = info.map(([k,v])=>
+    `<div class="info-card"><div class="lab">${k}</div><div class="val">${v}</div></div>`).join('');
+
+  drawTimeline();
+  computeStats();
+}
+
+function drawTimeline() {
+  const svg = document.getElementById('timeline');
+  const W = 1200, H = 380;
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = '';
+  const dur = CURRENT.duration_s;
+  const x = t => (t/dur)*W;
+
+  // tracks layout
+  const TRACK_H = 32;
+  const tracks = [
+    {y: 5,   h: 50, name: 'Waveform'},
+    {y: 65,  h: TRACK_H, name: 'GT label'},
+    {y: 105, h: TRACK_H, name: 'Baseline (F)'},
+    {y: 145, h: TRACK_H, name: 'A8 Ensemble'},
+    {y: 185, h: TRACK_H, name: 'P2 Alternate'},
+    {y: 230, h: 60, name: 'Cosine (sliding)'},
+    {y: 305, h: 60, name: 'Ensemble score'},
+  ];
+
+  // Waveform envelope
+  const env = CURRENT.waveform_env;
+  const dispSR = CURRENT.display_sr;
+  const wavTrack = tracks[0];
+  let wavPath = '';
+  const wavMid = wavTrack.y + wavTrack.h/2;
+  for (let i=0; i<env.length; i++) {
+    const t = i/dispSR;
+    const px = x(t);
+    const py = wavMid - env[i]*wavTrack.h/2;
+    wavPath += (i===0?'M':'L') + ` ${px} ${py} `;
+  }
+  for (let i=env.length-1; i>=0; i--) {
+    const t = i/dispSR;
+    const px = x(t);
+    const py = wavMid + env[i]*wavTrack.h/2;
+    wavPath += `L ${px} ${py} `;
+  }
+  wavPath += 'Z';
+  svg.innerHTML += `<path d="${wavPath}" fill="rgba(140,160,200,0.6)"/>`;
+
+  // GT bars
+  const gtTrack = tracks[1];
+  for (const seg of CURRENT.gt_segments) {
+    const sx = x(seg.start), w = x(seg.end) - sx;
+    const col = LABEL_COLORS[seg.label] || '#444';
+    svg.innerHTML += `<rect x="${sx}" y="${gtTrack.y}" width="${w}" height="${gtTrack.h}" fill="${col}" />`;
+  }
+
+  // Prediction tracks (Baseline, A8, P2)
+  const predNames = ['Baseline (F, sliding)', 'A8 Ensemble (aligned)', 'P2 Force-Alternate'];
+  predNames.forEach((pname, idx) => {
+    const t = tracks[2+idx];
+    const pred = CURRENT.predictions[pname];
+    let segs;
+    if (pred.segments && pred.segments[0] && pred.segments[0].value !== undefined) {
+      segs = pred.segments;
+    } else {
+      segs = pred.segments;  // {start, end, value}
+    }
+    for (const seg of segs) {
+      const sx = x(seg.start), w = x(seg.end) - sx;
+      const col = seg.value===1 ? METHOD_COLORS[pname]+'cc' : '#15191e';
+      svg.innerHTML += `<rect x="${sx}" y="${t.y}" width="${w}" height="${t.h}" fill="${col}" stroke="#0a0e13" stroke-width="0.5"/>`;
+    }
+  });
+
+  // Cosine curve (sliding, raw + smoothed)
+  const cosTrack = tracks[5];
+  const sld = CURRENT.sliding_cosine;
+  const cosMin = -0.2, cosMax = 0.6;
+  const cosY = v => cosTrack.y + cosTrack.h - ((v-cosMin)/(cosMax-cosMin))*cosTrack.h;
+  // threshold line at 0.075
+  const thrY = cosY(CURRENT.predictions['Baseline (F, sliding)'].thr);
+  svg.innerHTML += `<line x1="0" y1="${thrY}" x2="${W}" y2="${thrY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.5"/>`;
+  // smoothed
+  let pathSm = '';
+  for (let i=0; i<sld.times.length; i++) {
+    const px = x(sld.times[i]), py = cosY(Math.max(cosMin, Math.min(cosMax, sld.smoothed[i])));
+    pathSm += (i===0?'M':'L') + ` ${px} ${py} `;
+  }
+  svg.innerHTML += `<path d="${pathSm}" stroke="${METHOD_COLORS['A8 Ensemble (aligned)']}" stroke-width="1.2" fill="none"/>`;
+  // raw
+  let pathRaw = '';
+  for (let i=0; i<sld.times.length; i++) {
+    const px = x(sld.times[i]), py = cosY(Math.max(cosMin, Math.min(cosMax, sld.scores[i])));
+    pathRaw += (i===0?'M':'L') + ` ${px} ${py} `;
+  }
+  svg.innerHTML += `<path d="${pathRaw}" stroke="#bc8cff" stroke-width="0.6" fill="none" opacity="0.45"/>`;
+
+  // Ensemble score per segment
+  const ensTrack = tracks[6];
+  const ens = CURRENT.segment_ensemble.segments;
+  const ensVals = ens.map(s=>s.score);
+  const ensMin = Math.min(-2, ...ensVals), ensMax = Math.max(2, ...ensVals);
+  const ensY = v => ensTrack.y + ensTrack.h - ((v-ensMin)/(ensMax-ensMin))*ensTrack.h;
+  const zeroY = ensY(0);
+  svg.innerHTML += `<line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.5"/>`;
+  // A8 thr line
+  const a8thrY = ensY(CURRENT.predictions['A8 Ensemble (aligned)'].thr);
+  svg.innerHTML += `<line x1="0" y1="${a8thrY}" x2="${W}" y2="${a8thrY}" stroke="${METHOD_COLORS['A8 Ensemble (aligned)']}" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.7"/>`;
+  for (const seg of ens) {
+    const sx = x(seg.start), w = x(seg.end) - sx;
+    const cy = ensY(seg.score);
+    const col = seg.score>=CURRENT.predictions['A8 Ensemble (aligned)'].thr ? '#39d0d8' : '#888';
+    svg.innerHTML += `<line x1="${sx+w/2}" y1="${zeroY}" x2="${sx+w/2}" y2="${cy}" stroke="${col}" stroke-width="2"/>`;
+    svg.innerHTML += `<circle cx="${sx+w/2}" cy="${cy}" r="2.5" fill="${col}"/>`;
+  }
+
+  // Track labels (left side text)
+  for (const t of tracks) {
+    svg.innerHTML += `<text x="3" y="${t.y - 2}" class="track-label">${t.name}</text>`;
+  }
+
+  // Time axis ticks
+  const tickStep = Math.ceil(dur/10);
+  for (let s=0; s<=dur; s+=tickStep) {
+    const px = x(s);
+    svg.innerHTML += `<line x1="${px}" y1="${H-15}" x2="${px}" y2="${H-10}" stroke="#444"/>`;
+    svg.innerHTML += `<text x="${px}" y="${H-2}" font-size="9" fill="#888" text-anchor="middle">${s}s</text>`;
+  }
+
+  // Click to seek
+  svg.addEventListener('click', e => {
+    const rect = svg.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    AUDIO.currentTime = (px/W)*dur;
+    AUDIO.play();
+  });
+
+  // Cursor follows audio
+  let cursorLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  cursorLine.classList.add('cursor-line');
+  cursorLine.setAttribute('x1','0'); cursorLine.setAttribute('x2','0');
+  cursorLine.setAttribute('y1','0'); cursorLine.setAttribute('y2',H);
+  svg.appendChild(cursorLine);
+  const updateCursor = () => {
+    const px = (AUDIO.currentTime/dur)*W;
+    cursorLine.setAttribute('x1', px); cursorLine.setAttribute('x2', px);
+  };
+  AUDIO.addEventListener('timeupdate', updateCursor);
+}
+
+function computeStats() {
+  // Compute per-method F1 vs GT at frame level (rough estimate)
+  // GT binary: label==1 only
+  const dur = CURRENT.duration_s;
+  const SR_DUMMY = 100;  // 10ms granularity for fast computation
+  const N = Math.floor(dur * SR_DUMMY);
+  const gt = new Uint8Array(N);
+  for (const seg of CURRENT.gt_segments) {
+    if (seg.label === 1) {
+      const s = Math.floor(seg.start*SR_DUMMY);
+      const e = Math.min(Math.floor(seg.end*SR_DUMMY), N);
+      for (let i=s; i<e; i++) gt[i] = 1;
+    }
+  }
+
+  const stats = [];
+  for (const pname of ['Baseline (F, sliding)', 'A8 Ensemble (aligned)', 'P2 Force-Alternate']) {
+    const pred = new Uint8Array(N);
+    for (const seg of CURRENT.predictions[pname].segments) {
+      if (seg.value === 1) {
+        const s = Math.floor(seg.start*SR_DUMMY);
+        const e = Math.min(Math.floor(seg.end*SR_DUMMY), N);
+        for (let i=s; i<e; i++) pred[i] = 1;
+      }
+    }
+    let tp=0,fp=0,fn=0,tn=0;
+    for (let i=0; i<N; i++) {
+      if (gt[i]===1 && pred[i]===1) tp++;
+      else if (gt[i]===0 && pred[i]===1) fp++;
+      else if (gt[i]===1 && pred[i]===0) fn++;
+      else tn++;
+    }
+    const pr = tp/(tp+fp+1e-9);
+    const rc = tp/(tp+fn+1e-9);
+    const f1 = 2*pr*rc/(pr+rc+1e-9);
+    const far = fp/(fp+tn+1e-9);
+    const cls = (f1>=0.85 && rc>=0.9 && far<=0.2) ? 'match' : (f1>=0.85 ? '' : 'miss');
+    stats.push({name: pname, f1, tar:rc, far, cls});
+  }
+  document.getElementById('row-stats').innerHTML = stats.map(s=>
+    `<div class="stat-card ${s.cls}"><div class="name">${s.name}</div>
+     <div class="nums"><b>F1=${s.f1.toFixed(3)}</b> TAR=${s.tar.toFixed(3)} FAR=${s.far.toFixed(3)}</div></div>`
+  ).join('');
+}
+
+loadManifest();
+</script>
+
+</body>
+</html>
