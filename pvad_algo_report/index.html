@@ -111,6 +111,78 @@ canvas{width:100%!important;height:100%!important}
   <span class="current-label">當前 ·<b>演算法分析</b></span>
 </nav>
 <!-- PVAD-TOPNAV-END -->
+<!-- PVAD-COMMONSTYLE-START -->
+<style>
+/* Lightweight beautification layer — uses :where() for zero specificity so
+   it never overrides existing styles, only fills in missing polish. */
+
+/* Smoother transitions everywhere */
+:where(a, button, summary, .card, .deploy-card, .verdict-card,
+       .k, .kpi-row > *, [class*="-card"]) {
+  transition: background-color .15s ease, border-color .15s ease,
+              box-shadow .15s ease, transform .15s ease, color .15s ease;
+}
+
+/* Link hover brightness */
+:where(body) a:hover { filter: brightness(1.18); }
+
+/* Table row hover tint (subtle, picks up site theme accent) */
+:where(table) tbody tr:hover :where(td) {
+  background-color: rgba(88,166,255,.06);
+}
+
+/* Inline code styling */
+:where(p, li, td, h1, h2, h3, h4, h5, div) > :where(code) {
+  background: rgba(140,140,160,.14);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono','Cascadia Code',Consolas,Menlo,monospace;
+  font-size: .92em;
+}
+
+/* Slimmer scrollbars (WebKit / Chromium) */
+:where(*)::-webkit-scrollbar { width: 8px; height: 8px; }
+:where(*)::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+:where(*)::-webkit-scrollbar-thumb:hover { background: #484f58; }
+:where(*)::-webkit-scrollbar-track { background: transparent; }
+
+/* Card lift on hover */
+:where(.card, .deploy-card, .verdict-card, .kpi-row > *):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+/* Keyboard focus ring */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Heading polish */
+:where(h1, h2) { letter-spacing: -.01em; }
+:where(h1) { font-weight: 700; }
+
+/* Selection */
+::selection { background: #1f6feb; color: #fff; }
+
+/* Optional: improved <details> default for any non-nav details element */
+:where(details:not(.pvad-menu)) > summary { cursor: pointer; }
+
+/* Image lazy fade-in */
+:where(img) { max-width: 100%; height: auto; }
+
+/* Better blockquote (if any page uses) */
+:where(blockquote) {
+  border-left: 3px solid #388bfd;
+  padding: 8px 14px;
+  margin: 10px 0;
+  background: rgba(56,139,253,.06);
+  border-radius: 0 6px 6px 0;
+  color: #c0c8d4;
+}
+</style>
+<!-- PVAD-COMMONSTYLE-END -->
 
 
 <header>
