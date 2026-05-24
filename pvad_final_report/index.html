@@ -113,6 +113,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px;margin-t
       <div class="val y">部分</div>
       <div class="sub">F1✓ FAR✓ TAR 0.86 / 目標 0.90</div>
     </div>
+    <div class="verdict-card">
+      <div class="label">模型比較</div>
+      <div class="val g">CAM++ 勝</div>
+      <div class="sub">vs WeSpeaker (0.77), ECAPA (0.67)</div>
+    </div>
   </div>
 </div>
 
@@ -307,14 +312,21 @@ HANDOVER 的 baseline 用了錯誤的 fbank：32ms FFT 全長視窗 + 無 CMN。
 <strong>物理上限</strong>：在 CAM++ 0.3s chunk-level 嵌入下，TAR=0.90 必須 FAR≥0.22。要 TAR≥0.90 同時 FAR≤0.20，必須換更強嵌入或前端去噪。
 </div>
 
-<h3>突破上限的三條路</h3>
+<h3>實測 3 個模型對比 (推翻原假設)</h3>
+<div class="insight bad">
+<strong>「換更強模型」假設被實測推翻</strong>。用同樣 A8 pipeline 比較：<br>
+<b>CAM++ F1=0.85</b> | WeSpeaker F1=0.77 | ECAPA-TDNN F1=0.67<br>
+CAM++ 是這個任務 + 中文 speaker + 0.3s chunk 配置下的真正最強。WeSpeaker (VoxCeleb 英文訓練) 跟中文 mismatch；ECAPA-TDNN embedding 在 spk4/spk7 之間 cos=0.53（不正常，可能 fbank 規格不符）。
+</div>
+
+<h3>剩下的突破路徑 (誠實版)</h3>
 
 <div class="deploy-grid">
-  <div class="deploy-card">
-    <div class="scenario">路徑 A</div>
-    <h4>換更強模型</h4>
-    <div class="perf">預期 F1 +0.05~0.10</div>
-    <p>WeSpeaker ResNet34 (本地有權重)、ECAPA-TDNN、3D-Speaker 200k 中文模型 (Hugging Face)。CAM++ 是輕量版，更大的模型在 0.3s chunk 上有更穩定嵌入。</p>
+  <div class="deploy-card fallback">
+    <div class="scenario">路徑 A (已實測無效)</div>
+    <h4>換現成更強模型</h4>
+    <div class="perf bad">實測 F1 -0.08 ~ -0.18</div>
+    <p>WeSpeaker / ECAPA-TDNN 反而更差。Paper benchmark 不能直接套用。</p>
   </div>
 
   <div class="deploy-card">
@@ -347,7 +359,7 @@ PVAD 優化最終報告 · CAM++ · newval_v3 fixed_0.5s · 2026-05-24<br>
 
 <script>
 const JOURNEY = [{"step": "起點", "desc": "HANDOVER 記錄的 baseline (錯誤 fbank)", "f1": 0.7255, "phase": "start"}, {"step": "修 Fbank", "desc": "換 Kaldi Povey + preemph + CMN", "f1": 0.7395, "delta": "+0.014", "phase": "fix"}, {"step": "AS-norm / Discriminative", "desc": "加 cohort 標準化", "f1": 0.7441, "delta": "+0.005", "phase": "score"}, {"step": "Aligned A0", "desc": "利用 0.5s 邊界，抽中心 0.3s", "f1": 0.7932, "delta": "+0.049", "phase": "aligned"}, {"step": "Multi-chunk A3", "desc": "每段 3 chunks 取平均", "f1": 0.8218, "delta": "+0.029", "phase": "aligned"}, {"step": "AS-norm Multi A5", "desc": "加 cohort 標準化", "f1": 0.8267, "delta": "+0.005", "phase": "aligned"}, {"step": "A8 Triple Ensemble", "desc": "cos + AS-norm + Discr 標準化平均", "f1": 0.8491, "delta": "+0.022", "phase": "ensemble"}, {"step": "SNR-aware threshold", "desc": "嘗試自適應閾值", "f1": 0.8492, "delta": "+0.000", "phase": "plateau"}, {"step": "P2 Force-alternate", "desc": "利用嚴格交錯結構假設 (僅特定場景)", "f1": 0.9891, "delta": "+0.140", "phase": "structured"}];
-const METHODS = [{"name": "★★★ P2 Force-Alternate", "f1": 0.9891, "tar": 0.978, "far": 0.0, "rate": "2/sec", "group": "★ Structured"}, {"name": "★ A8. Triple Ensemble", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "2/sec", "group": "★ Best Generic"}, {"name": "★ Hybrid (A8 → 0.1s 展開)", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "10/sec", "group": "★ Deploy"}, {"name": "T4_snr_mid", "f1": 0.8447, "tar": 0.878, "far": 0.206, "rate": "2/sec", "group": "Adaptive"}, {"name": "T1. Per-file Median", "f1": 0.844, "tar": 0.835, "far": 0.147, "rate": "2/sec", "group": "Adaptive"}, {"name": "T4_snr_aggr", "f1": 0.8411, "tar": 0.883, "far": 0.222, "rate": "2/sec", "group": "Adaptive"}, {"name": "T2. Per-file Otsu", "f1": 0.834, "tar": 0.798, "far": 0.118, "rate": "2/sec", "group": "Adaptive"}, {"name": "A5. AS-norm Multi", "f1": 0.8267, "tar": 0.835, "far": 0.189, "rate": "2/sec", "group": "Aligned"}, {"name": "A6. Discr Multi", "f1": 0.8248, "tar": 0.83, "far": 0.186, "rate": "2/sec", "group": "Aligned"}, {"name": "A3. Multi-chunk Mean", "f1": 0.8218, "tar": 0.85, "far": 0.223, "rate": "2/sec", "group": "Aligned"}, {"name": "A2. Multi-chunk Vote", "f1": 0.8149, "tar": 0.839, "far": 0.225, "rate": "2/sec", "group": "Aligned"}, {"name": "A4. Energy-aligned", "f1": 0.7972, "tar": 0.819, "far": 0.241, "rate": "2/sec", "group": "Aligned"}, {"name": "A0. Single Center", "f1": 0.7932, "tar": 0.825, "far": 0.261, "rate": "2/sec", "group": "Aligned"}, {"name": "A1. Aligned + AS-norm", "f1": 0.7851, "tar": 0.77, "far": 0.195, "rate": "2/sec", "group": "Aligned"}, {"name": "C. Sliding Ensemble", "f1": 0.7651, "tar": 0.82, "far": 0.331, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding Discriminative", "f1": 0.7441, "tar": 0.828, "far": 0.408, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding AS-norm", "f1": 0.744, "tar": 0.821, "far": 0.396, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding F (Kaldi)", "f1": 0.7395, "tar": 0.833, "far": 0.43, "rate": "frame", "group": "Sliding"}, {"name": "Sliding 0.3s + Hysteresis", "f1": 0.7252, "tar": 0.748, "far": 0.321, "rate": "10/sec", "group": "10/sec"}, {"name": "Sliding 0.3s + Ensemble", "f1": 0.7053, "tar": 0.833, "far": 0.541, "rate": "10/sec", "group": "10/sec"}, {"name": "Sliding A8 (0.5s win × 0.1s hop)", "f1": 0.636, "tar": 0.773, "far": 0.673, "rate": "10/sec", "group": "10/sec"}];
+const METHODS = [{"name": "★★★ P2 Force-Alternate", "f1": 0.9891, "tar": 0.978, "far": 0.0, "rate": "2/sec", "group": "★ Structured"}, {"name": "★ A8. Triple Ensemble", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "2/sec", "group": "★ Best Generic"}, {"name": "★ Hybrid (A8 → 0.1s 展開)", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "10/sec", "group": "★ Deploy"}, {"name": "T4_snr_mid", "f1": 0.8447, "tar": 0.878, "far": 0.206, "rate": "2/sec", "group": "Adaptive"}, {"name": "T1. Per-file Median", "f1": 0.844, "tar": 0.835, "far": 0.147, "rate": "2/sec", "group": "Adaptive"}, {"name": "T4_snr_aggr", "f1": 0.8411, "tar": 0.883, "far": 0.222, "rate": "2/sec", "group": "Adaptive"}, {"name": "T2. Per-file Otsu", "f1": 0.834, "tar": 0.798, "far": 0.118, "rate": "2/sec", "group": "Adaptive"}, {"name": "A5. AS-norm Multi", "f1": 0.8267, "tar": 0.835, "far": 0.189, "rate": "2/sec", "group": "Aligned"}, {"name": "A6. Discr Multi", "f1": 0.8248, "tar": 0.83, "far": 0.186, "rate": "2/sec", "group": "Aligned"}, {"name": "A3. Multi-chunk Mean", "f1": 0.8218, "tar": 0.85, "far": 0.223, "rate": "2/sec", "group": "Aligned"}, {"name": "A2. Multi-chunk Vote", "f1": 0.8149, "tar": 0.839, "far": 0.225, "rate": "2/sec", "group": "Aligned"}, {"name": "A4. Energy-aligned", "f1": 0.7972, "tar": 0.819, "far": 0.241, "rate": "2/sec", "group": "Aligned"}, {"name": "A0. Single Center", "f1": 0.7932, "tar": 0.825, "far": 0.261, "rate": "2/sec", "group": "Aligned"}, {"name": "A1. Aligned + AS-norm", "f1": 0.7851, "tar": 0.77, "far": 0.195, "rate": "2/sec", "group": "Aligned"}, {"name": "WeSpeaker ResNet34 (A8 pipeline)", "f1": 0.7726, "tar": 0.778, "far": 0.242, "rate": "2/sec", "group": "Model Compare"}, {"name": "C. Sliding Ensemble", "f1": 0.7651, "tar": 0.82, "far": 0.331, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding Discriminative", "f1": 0.7441, "tar": 0.828, "far": 0.408, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding AS-norm", "f1": 0.744, "tar": 0.821, "far": 0.396, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding F (Kaldi)", "f1": 0.7395, "tar": 0.833, "far": 0.43, "rate": "frame", "group": "Sliding"}, {"name": "Sliding 0.3s + Hysteresis", "f1": 0.7252, "tar": 0.748, "far": 0.321, "rate": "10/sec", "group": "10/sec"}, {"name": "Sliding 0.3s + Ensemble", "f1": 0.7053, "tar": 0.833, "far": 0.541, "rate": "10/sec", "group": "10/sec"}, {"name": "ECAPA-TDNN (A8 pipeline)", "f1": 0.6732, "tar": 0.864, "far": 0.719, "rate": "2/sec", "group": "Model Compare"}, {"name": "Sliding A8 (0.5s win × 0.1s hop)", "f1": 0.636, "tar": 0.773, "far": 0.673, "rate": "10/sec", "group": "10/sec"}];
 
 function showSec(id) {
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
