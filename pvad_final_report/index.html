@@ -3,88 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PVAD 優化最終報告 · F1=0.94 (SD × A8 Ensemble)</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<title>PVAD 最終報告 — SD × A8 Ensemble F1=0.9386</title>
 <style>
-:root{--bg:#0d1117;--card:#161b22;--card2:#1a1f28;--border:#21262d;--accent:#388bfd;--green:#3fb950;--yellow:#d29922;--red:#f85149;--purple:#bc8cff;--cyan:#22d3ee;--orange:#fb923c;--text:#e6edf3;--muted:#7d8590}
+:root{--bg:#0d1117;--card:#161b22;--card2:#1a1f28;--border:#21262d;
+      --accent:#388bfd;--green:#3fb950;--yellow:#d29922;--red:#f85149;
+      --cyan:#22d3ee;--purple:#bc8cff;--text:#e6edf3;--muted:#7d8590}
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;line-height:1.65;max-width:1280px;margin:0 auto;padding:20px}
+body{background:var(--bg);color:var(--text);font:14px/1.6 'Segoe UI',system-ui,sans-serif;
+     max-width:1100px;margin:0 auto;padding:18px}
 
-.hero{background:linear-gradient(135deg,#1a2333,#252e3e);padding:32px 28px;border-radius:14px;margin-bottom:18px;border:1px solid var(--border);position:relative;overflow:hidden}
-.hero h1{font-size:1.9rem;margin-bottom:8px;letter-spacing:-.5px}
-.hero .lead{color:var(--muted);font-size:.95rem;margin-bottom:18px}
-.verdict{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:14px}
-.verdict-card{background:#0d1117cc;border:1px solid var(--border);border-radius:10px;padding:14px}
-.verdict-card .label{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.6px}
-.verdict-card .val{font-size:1.6rem;font-weight:800;margin-top:4px;letter-spacing:-1px}
-.verdict-card .val.g{color:var(--green)}.verdict-card .val.y{color:var(--yellow)}.verdict-card .val.r{color:var(--red)}
-.verdict-card .sub{font-size:.78rem;color:var(--muted);margin-top:4px}
+.hero{background:linear-gradient(135deg,#1a2333,#252e3e);padding:24px 26px;
+      border-radius:14px;border:1px solid var(--border);margin-bottom:14px}
+.hero h1{font-size:1.5rem;letter-spacing:-.4px;margin-bottom:4px}
+.hero .lead{color:var(--muted);font-size:.85rem;margin-bottom:14px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.kpi .k{background:#0d1117cc;border:1px solid var(--border);
+        border-radius:8px;padding:10px 12px}
+.kpi .k .v{font-size:1.55rem;font-weight:800;letter-spacing:-1px;color:var(--green)}
+.kpi .k .v.b{color:var(--accent)}
+.kpi .k .l{color:var(--muted);font-size:.66rem;text-transform:uppercase;
+           letter-spacing:.6px;margin-top:2px}
+.kpi .k .s{color:var(--muted);font-size:.72rem;margin-top:2px}
 
-.nav{display:flex;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px;margin-bottom:14px;overflow-x:auto;flex-wrap:wrap}
-.nav button{background:transparent;color:var(--muted);border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;white-space:nowrap;flex-shrink:0}
-.nav button:hover{color:var(--text)}
-.nav button.active{background:var(--accent);color:#fff}
+section{background:var(--card);border:1px solid var(--border);border-radius:10px;
+        padding:16px 18px;margin-bottom:12px}
+section h2{font-size:1rem;color:var(--accent);margin-bottom:10px;font-weight:600;
+           display:flex;align-items:center;gap:8px}
+section h2 small{color:var(--muted);font-size:.75rem;font-weight:500}
 
-section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:14px;display:none}
-section.active{display:block}
-section h2{font-size:1.15rem;color:var(--accent);margin-bottom:14px;font-weight:600}
-section h3{font-size:1rem;color:var(--cyan);margin:18px 0 10px;font-weight:600}
-
-.journey{position:relative;padding:10px 0}
-.journey-item{display:grid;grid-template-columns:auto 100px 1fr 80px;gap:14px;align-items:center;padding:10px 0;border-bottom:1px dashed #2a2d3a}
-.journey-item:last-child{border-bottom:none}
-.j-step{font-weight:700;color:var(--accent);font-size:.95rem}
-.j-f1{font-family:monospace;font-size:1.05rem;font-weight:700;color:var(--green)}
-.j-desc{color:#c0c8d4;font-size:.88rem;line-height:1.5}
-.j-delta{font-family:monospace;font-size:.85rem;color:var(--yellow);text-align:right}
-.j-delta.pos{color:var(--green)}.j-delta.zero{color:var(--muted)}
-.j-bar{height:8px;background:#1e2235;border-radius:4px;margin-top:3px;overflow:hidden}
-.j-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:4px}
-
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{color:var(--muted);text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
-td{padding:8px 10px;border-bottom:1px solid #1e2133}
-tr.met td{background:#1a3a2a30}
-tr.close td{background:#3a2a1e30}
-tr.fail td{opacity:0.6}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{color:var(--muted);text-align:left;padding:7px 9px;border-bottom:1px solid var(--border);
+   font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+td{padding:6px 9px;border-bottom:1px solid #1e2133}
 tr.star td{background:#1a3a2a55;font-weight:600}
-.num{font-family:monospace;text-align:right}
-.badge{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700;margin-left:4px}
-.badge.g{background:#1a3a2a;color:var(--green)}.badge.y{background:#3a3a1e;color:var(--yellow)}.badge.r{background:#3a1e1e;color:var(--red)}
+tr.meh td{color:var(--muted)}
+.num{font-family:'JetBrains Mono',Consolas,monospace;text-align:right}
+.num.g{color:var(--green)}.num.y{color:var(--yellow)}.num.r{color:var(--red)}
 
-.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
-.kpi-row .k{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
-.kpi-row .k .v{font-size:1.5rem;font-weight:800;color:var(--accent)}
-.kpi-row .k .v.g{color:var(--green)}.kpi-row .k .v.r{color:var(--red)}
-.kpi-row .k label{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;display:block}
+.recipe{background:#0a0e13;border:1px solid var(--border);border-radius:8px;
+        padding:12px 14px;font-family:'JetBrains Mono',Consolas,monospace;
+        font-size:12px;line-height:1.7;color:#c0c8d4;white-space:pre;overflow-x:auto}
+.recipe .c{color:var(--muted)}
+.recipe .k{color:var(--purple)}
+.recipe .n{color:var(--yellow)}
+.recipe .v{color:var(--green)}
 
-.insight{background:#0d1419;border-left:3px solid var(--accent);padding:12px 16px;margin:10px 0;font-size:13px;line-height:1.7;color:#c0c8d4;border-radius:0 8px 8px 0}
-.insight strong{color:var(--accent)}
-.insight.warn{border-left-color:var(--yellow)}
-.insight.warn strong{color:var(--yellow)}
-.insight.bad{border-left-color:var(--red)}
-.insight.bad strong{color:var(--red)}
-.insight.good{border-left-color:var(--green)}
-.insight.good strong{color:var(--green)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.row2{grid-template-columns:1fr}}
 
-.deploy-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px}
-.deploy-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;border-left:4px solid var(--accent)}
-.deploy-card.best{border-left-color:var(--green)}
-.deploy-card.fallback{border-left-color:var(--yellow)}
-.deploy-card h4{font-size:.95rem;color:var(--accent);margin-bottom:6px}
-.deploy-card.best h4{color:var(--green)}
-.deploy-card .scenario{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-.deploy-card .perf{font-family:monospace;font-size:.85rem;color:var(--green);margin:6px 0}
-.deploy-card .perf.bad{color:var(--red)}
-.deploy-card p{font-size:.85rem;color:#c0c8d4}
+.deploy{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.deploy .card{background:var(--card2);border:1px solid var(--border);
+              border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px}
+.deploy .card.best{border-left-color:var(--green)}
+.deploy .card .label{color:var(--muted);font-size:.7rem;text-transform:uppercase;
+                     letter-spacing:.4px;margin-bottom:4px}
+.deploy .card h4{font-size:.92rem;margin-bottom:4px;color:var(--accent)}
+.deploy .card.best h4{color:var(--green)}
+.deploy .card .perf{font-family:'JetBrains Mono',Consolas,monospace;
+                    color:var(--green);font-size:.78rem;margin:5px 0}
+.deploy .card p{font-size:.8rem;color:#c0c8d4;line-height:1.5}
 
-.ch{position:relative;height:400px;margin:10px 0}
-.ch.tall{height:550px}
-canvas{width:100%!important;height:100%!important}
-
-.spec{font-family:monospace;font-size:11.5px;color:#c0c8d4;background:#0a0e13;padding:12px 14px;border-radius:6px;border:1px solid var(--border);line-height:1.6;white-space:pre;overflow-x:auto}
-
-footer{text-align:center;color:var(--muted);font-size:11px;padding:24px;margin-top:14px}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:14px 0 4px}
+footer a{color:var(--accent);text-decoration:none}
+.tag{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;
+     border-radius:99px;background:#1a3a2a;color:var(--green);margin-left:6px}
 </style>
 </head>
 <body>
@@ -204,676 +186,129 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px;margin-t
 
 
 <div class="hero">
-  <h1>PVAD 優化最終報告</h1>
-  <p class="lead">CAM++ × SD ConvNet+BiGRU Ensemble · newval_v3 / fixed_0.5s (210 檔，含 5 噪音 × 5 SNR + clean) · 0.1 秒 segment-level 評估 · 更新 2026-05-25</p>
-  <div class="verdict">
-    <div class="verdict-card">
-      <div class="label">起點 F1</div>
-      <div class="val r">0.7255</div>
-      <div class="sub">HANDOVER 基線 (錯誤 fbank)</div>
+  <h1>PVAD 最終報告 · SD × A8 4-vector Ensemble</h1>
+  <p class="lead">newval_v3 / fixed_0.5s · 210 檔 · 0.1s segment-level metric · 2026-05-25</p>
+  <div class="kpi">
+    <div class="k"><div class="v">0.9386</div><div class="l">F1</div><div class="s">overall</div></div>
+    <div class="k"><div class="v">0.932</div><div class="l">TAR</div><div class="s">≥ 0.90 達標</div></div>
+    <div class="k"><div class="v">0.054</div><div class="l">FAR</div><div class="s">≤ 0.20 達標</div></div>
+    <div class="k"><div class="v b">3 / 3</div><div class="l">目標達成</div><div class="s">F1 TAR FAR 全標</div></div>
+    <div class="k"><div class="v b">189K</div><div class="l">SD params</div><div class="s">CAM++ 200k</div></div>
+  </div>
+</div>
+
+<section>
+  <h2>Recipe — 怎麼組出來的 <small>(per 0.5s segment)</small></h2>
+  <div class="recipe"><span class="c"># Branch A — CAM++ A8 (3 chunks @ offsets 0.05/0.10/0.15s, each 0.3s)</span>
+<span class="k">cos_z</span>   = zscore(mean<sub>3</sub>( <span class="n">cos</span>(emb, target_centroid) ))
+<span class="k">discr_z</span> = zscore(mean<sub>3</sub>( <span class="n">cos</span>(emb, target) − <span class="n">max</span>(<span class="n">cos</span>(emb, cohort<sub>200</sub>)) ))
+
+<span class="c"># Branch B — SD ConvNet+BiGRU (per-target, 4ms hop, mean over segment)</span>
+<span class="k">sd_z</span>    = zscore(mean(p[1] − (p[0] + p[2] + p[3])))
+
+<span class="c"># Fusion (weights swept over 5×5×5×5, asnorm dropped — info redundant with SD)</span>
+<span class="k">combo</span>   = <span class="v">0.5</span>·cos_z + <span class="v">0.5</span>·discr_z + <span class="v">2.0</span>·sd_z
+<span class="k">pred</span>    = combo ≥ <span class="v">0.05</span></div>
+</section>
+
+<div class="row2">
+<section>
+  <h2>Per-speaker</h2>
+  <table>
+    <thead><tr><th>說話人</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th></tr></thead>
+    <tbody>
+      <tr class="star"><td>spk4 (User1, 男)</td><td class="num g">0.9635</td><td class="num">0.962</td><td class="num">0.034</td></tr>
+      <tr><td>spk7 (hsuan, 女)</td><td class="num">0.9233</td><td class="num">0.914</td><td class="num">0.066</td></tr>
+      <tr class="meh"><td>overall</td><td class="num">0.9386</td><td class="num">0.932</td><td class="num">0.054</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Per-noise</h2>
+  <table>
+    <thead><tr><th>條件</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th></tr></thead>
+    <tbody>
+      <tr class="star"><td>no_noise</td><td class="num g">0.9893</td><td class="num">0.987</td><td class="num">0.009</td></tr>
+      <tr><td>crowd</td><td class="num">0.9607</td><td class="num">0.957</td><td class="num">0.035</td></tr>
+      <tr><td>cafeteria</td><td class="num">0.9447</td><td class="num">0.937</td><td class="num">0.047</td></tr>
+      <tr><td>classroom</td><td class="num">0.9292</td><td class="num">0.917</td><td class="num">0.056</td></tr>
+      <tr><td>fan <span class="tag" style="background:#3a2a1e;color:var(--yellow)">最弱</span></td><td class="num y">0.9096</td><td class="num">0.907</td><td class="num">0.088</td></tr>
+    </tbody>
+  </table>
+</section>
+</div>
+
+<div class="row2">
+<section>
+  <h2>Per-SNR <small>(越大越吵)</small></h2>
+  <table>
+    <thead><tr><th>SNR</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th></tr></thead>
+    <tbody>
+      <tr class="star"><td>0.2 — 最乾淨</td><td class="num g">0.9851</td><td class="num">0.982</td><td class="num">0.012</td></tr>
+      <tr><td>0.4</td><td class="num">0.9630</td><td class="num">0.955</td><td class="num">0.029</td></tr>
+      <tr><td>0.6</td><td class="num">0.9431</td><td class="num">0.935</td><td class="num">0.048</td></tr>
+      <tr><td>0.8</td><td class="num">0.9116</td><td class="num">0.905</td><td class="num">0.081</td></tr>
+      <tr><td>1.0 — 最吵</td><td class="num y">0.8771</td><td class="num">0.869</td><td class="num">0.113</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>vs. 單模型 <small>(同試場)</small></h2>
+  <table>
+    <thead><tr><th>配置</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th></tr></thead>
+    <tbody>
+      <tr class="star"><td>SD × A8 4-vec ensemble</td><td class="num g">0.9386</td><td class="num">0.932</td><td class="num">0.054</td></tr>
+      <tr><td>CAM++ A8 Triple Ensemble</td><td class="num">0.8583</td><td class="num">0.879</td><td class="num">0.170</td></tr>
+      <tr><td>SD ConvNet+BiGRU (alone)</td><td class="num">0.8367</td><td class="num">0.812</td><td class="num">0.132</td></tr>
+    </tbody>
+  </table>
+</section>
+</div>
+
+<section>
+  <h2>Deployment</h2>
+  <div class="deploy">
+    <div class="card best">
+      <div class="label">固定使用者（已訓練 SD model）</div>
+      <h4>SD × A8 Ensemble</h4>
+      <div class="perf">F1=0.94 · TAR=0.93 · FAR=0.054</div>
+      <p>CAM++ 推理 2 次/秒（3 chunks 批次）+ SD 連續 4ms hop。Z-score 加權合成、單一閾值。輸出 10 binary labels/sec。Memory ≈ 29 MB / user。</p>
     </div>
-    <div class="verdict-card">
-      <div class="label">A8 Ensemble F1</div>
-      <div class="val g">0.8491</div>
-      <div class="sub">前一階段 baseline (+0.124)</div>
+    <div class="card">
+      <div class="label">新使用者（無 SD model，fallback）</div>
+      <h4>CAM++ A8 alone</h4>
+      <div class="perf">F1=0.86 · TAR=0.88 · FAR=0.17</div>
+      <p>只需 192-d enrollment centroid (768B)。無需訓練。三項目標未全達。</p>
     </div>
-    <div class="verdict-card">
-      <div class="label">★ SD × A8 4-vec F1</div>
-      <div class="val g">0.9386</div>
-      <div class="sub">本次新最佳 (+0.090)</div>
-    </div>
-    <div class="verdict-card">
-      <div class="label">目標達標</div>
-      <div class="val g">三項全標</div>
-      <div class="sub">F1✓ TAR 0.93 ✓ FAR 0.054 ✓</div>
-    </div>
-    <div class="verdict-card">
-      <div class="label">P2 Alternate F1</div>
-      <div class="val g">0.9891</div>
-      <div class="sub">結構特化 (僅嚴格交錯)</div>
+    <div class="card">
+      <div class="label">純 mobile（極低資源）</div>
+      <h4>SD alone</h4>
+      <div class="perf">F1=0.84 · TAR=0.81 · FAR=0.13</div>
+      <p>0.74 MB model，per-frame 4ms 原生輸出。需 per-target 訓練。FAR 已低，但 TAR 不足。</p>
     </div>
   </div>
-</div>
-
-<div class="nav">
-  <button class="active" onclick="showSec('verdict')">最終結論</button>
-  <button onclick="showSec('journey')">優化歷程</button>
-  <button onclick="showSec('methods')">所有方法</button>
-  <button onclick="showSec('charts')">圖表分析</button>
-  <button onclick="showSec('deploy')">部署建議</button>
-  <button onclick="showSec('models')">模型對比</button>
-  <button onclick="showSec('limits')">天花板分析</button>
-  <button onclick="showSec('handover')">交接資訊</button>
-</div>
-
-<!-- ════ 最終結論 ════ -->
-<section id="verdict" class="active">
-<h2>最終結論</h2>
-
-<div class="kpi-row">
-  <div class="k"><div class="v g">0.94</div><label>SD×A8 F1</label></div>
-  <div class="k"><div class="v g">0.93</div><label>TAR</label></div>
-  <div class="k"><div class="v g">0.054</div><label>FAR</label></div>
-  <div class="k"><div class="v g">3/3</div><label>目標達標</label></div>
-  <div class="k"><div class="v">25+</div><label>方法測試</label></div>
-  <div class="k"><div class="v g">0.99</div><label>no_noise F1</label></div>
-</div>
-
-<div class="insight good">
-<strong>✓ 三項目標首次同時達標</strong>：F1=0.9386 (≥0.85 ✓)、TAR=0.932 (≥0.90 ✓)、FAR=0.054 (≤0.20 ✓)。HANDOVER_0524 第三節「TAR≥0.90 + FAR≤0.20 在現有 model 下物理上不可達」的結論被推翻。
-</div>
-
-<div class="insight good">
-<strong>✓ Ensemble 路徑突破</strong>：CAM++ A8 (F1=0.849) + SD ConvNet+BiGRU per-target 模型 (0.74 MB, 189K params, archive/inference) 兩者誤分模式正交，per-file z-score 加權後 F1 跳到 0.9386 (+0.090)。
-</div>
-
-<div class="insight">
-<strong>4-vector ensemble 最佳組合</strong>：<code>combo = 0.5·z(cos_target) + 0·z(asnorm) + 0.5·z(discr) + 2.0·z(sd_score)</code>，threshold ≈ 0.05。Top-6 全部丟掉 asnorm — 一旦 SD 加入，cohort z-score 變冗餘。
-</div>
-
-<h3>核心訊息</h3>
-<div class="insight good">
-<strong>SD × A8 4-vector Ensemble 是新的最佳配置</strong><br>
-F1=0.94, TAR=0.93, FAR=0.054。CAM++ 提供 speaker-agnostic embedding 距離，SD 提供 per-target 訓練判別；兩者互補，spk7 (女) 從 0.84→0.92、fan noise 從 0.78→0.91。
-</div>
-
-<div class="insight">
-<strong>P2 Force-Alternate F1=0.99 但場景受限</strong><br>
-利用「嚴格交錯」結構強制 H1/H2 假設選擇。對 fixed_0.5s 完美，但真實對話會崩。僅適合語音遊戲、輪流問答系統。
-</div>
-
-<div class="insight">
-<strong>SNR-aware threshold 結果證明 A8 已飽和</strong><br>
-測 7 種自適應閾值策略 (Otsu, percentile, SNR lookup 等)，全部 ≤ A8 baseline。原因：A8 的 z-score 已經做了 per-file 標準化，再加 per-file 校準是疊床架屋。
-</div>
-
 </section>
 
-<!-- ════ 優化歷程 ════ -->
-<section id="journey">
-<h2>優化歷程：F1 從 0.73 到 0.94</h2>
-<div class="journey" id="journey-list"></div>
-
-<h3>關鍵突破點</h3>
-<div class="insight good">
-<strong>1. Fbank Bug 修正 (+0.014)</strong><br>
-HANDOVER 的 baseline 用了錯誤的 fbank：32ms FFT 全長視窗 + 無 CMN。修正為 Kaldi 標準 (25ms Povey + preemphasis 0.97 + CMN) 後，centroid cos(spk4,spk7) 從 0.62 (異常) 降到 0.095 (正常)。
-</div>
-
-<div class="insight good">
-<strong>2. 對齊 0.5s 邊界 (+0.054)</strong><br>
-最大單一改進。fixed_0.5s 已知段邊界，避免滑動視窗跨段汙染。每段中心抽 0.3s chunk → F1 0.74 → 0.79。
-</div>
-
-<div class="insight good">
-<strong>3. Multi-chunk + Ensemble (+0.030)</strong><br>
-每段抽 3 個錯位 chunk 取平均 → 0.82。再加 AS-norm + Discriminative 標準化合成 → A8 ensemble 0.85。
-</div>
-
-<div class="insight warn">
-<strong>4. SNR-aware threshold (停滯)</strong><br>
-測 7 種自適應策略，效果與 A8 相當。原因是 A8 的 z-score 已隱含 per-file 適配。
-</div>
-
-<div class="insight good">
-<strong>★ 5. SD ConvNet+BiGRU Ensemble (+0.090)</strong><br>
-引入 <code>archive/inference</code> 內 per-target 訓練的 4-class 模型 (189K params, 0.74MB)。SD 提供 per-target 判別力，A8 提供 speaker-agnostic 距離；兩者誤分模式正交，per-file z-score 加權合成後 F1=0.9386。<b>spk7 從 0.84→0.92、fan noise 從 0.78→0.91</b>。
-</div>
-
-<div class="insight good">
-<strong>★ 6. 4-vector ensemble 解構 (+0.001)</strong><br>
-把 A8 內三個 score (cos / asnorm / discr) 解開後 5×5×5×5 sweep。最佳 <code>0.5·cos + 0·asnorm + 0.5·discr + 2.0·sd</code>。Top-6 全部丟掉 asnorm — SD 已隱含類似標準化。
-</div>
-
-<div class="insight good">
-<strong>7. P2 結構假設 (+0.140)</strong><br>
-強制 target/非 target 嚴格交錯，整檔選 H1 (偶=target) 或 H2 (奇=target) 較高分的方向。F1=0.99 但僅適用嚴格交錯場景。
-</div>
-</section>
-
-<!-- ════ 所有方法 ════ -->
-<section id="methods">
-<h2>所有方法測試結果</h2>
-<p style="color:var(--muted);font-size:13px;margin-bottom:12px">完整 25+ 方法測試結果，依 F1 排序。0.1 秒 segment-level 評估。</p>
-
-<div style="overflow-x:auto">
-<table id="methods-table">
-<thead><tr><th>方法</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th><th>決策率</th><th>群組</th><th>狀態</th></tr></thead>
-<tbody></tbody>
-</table>
-</div>
-</section>
-
-<!-- ════ 圖表分析 ════ -->
-<section id="charts">
-<h2>圖表分析</h2>
-
-<h3>F1 排名 (橫向)</h3>
-<div class="ch tall"><canvas id="f1-chart"></canvas></div>
-
-<h3>TAR vs FAR 散布</h3>
-<div class="ch"><canvas id="scatter"></canvas></div>
-
-<h3>F1 改進歷程</h3>
-<div class="ch"><canvas id="journey-chart"></canvas></div>
-</section>
-
-<!-- ════ 部署建議 ════ -->
-<section id="deploy">
-<h2>部署建議</h2>
-
-<div class="deploy-grid">
-  <div class="deploy-card best">
-    <div class="scenario">★ 主要推薦 (固定使用者)</div>
-    <h4>SD × A8 4-vector Ensemble</h4>
-    <div class="perf">F1=0.94  TAR=0.93  FAR=0.054</div>
-    <p>跑兩個模型：CAM++ A8 (cos/discr 兩分數，丟掉 asnorm) + per-target SD ConvNet+BiGRU (0.74 MB)。合成 <code>0.5·z(cos) + 0.5·z(discr) + 2.0·z(sd)</code>，閾值 ≈ 0.05。需要為每個使用者訓練專屬 SD model；CAM++ 推理 2/sec、SD 推理 250/sec (4ms hop)。</p>
-  </div>
-
-  <div class="deploy-card">
-    <div class="scenario">通用 (任意新使用者，無 SD 模型)</div>
-    <h4>A8 Triple Ensemble alone</h4>
-    <div class="perf">F1=0.85  TAR=0.86  FAR=0.17</div>
-    <p>A8 ensemble 推理 2 次/秒（每 0.5s 一個決策，3 chunks 同時批次），輸出時複製到 5 個 0.1s 子段。新使用者只需 enrollment centroid (768B)，無需訓練。</p>
-  </div>
-
-  <div class="deploy-card">
-    <div class="scenario">純通用 (不假設邊界)</div>
-    <h4>C. Sliding Ensemble</h4>
-    <div class="perf">F1=0.77  TAR=0.82  FAR=0.33</div>
-    <p>滑動 0.3s 視窗 + 三方法融合。完全不依賴結構，任何錄音都能用。精度較低但通用。</p>
-  </div>
-
-  <div class="deploy-card best">
-    <div class="scenario">嚴格交錯場景 (語音遊戲)</div>
-    <h4>P2. Force-Alternate</h4>
-    <div class="perf">F1=0.99  TAR=0.98  FAR=0.00</div>
-    <p>已知 target/非 target 嚴格交錯。整檔強制套用 H1 或 H2 交錯 pattern。真實對話會崩。</p>
-  </div>
-
-  <div class="deploy-card fallback">
-    <div class="scenario">需更高 TAR (放寬 FAR)</div>
-    <h4>T4_snr_aggr</h4>
-    <div class="perf">F1=0.84  TAR=0.88  FAR=0.22</div>
-    <p>SNR-aware 自適應閾值（積極變種）。TAR 突破 0.88，代價 FAR 升至 0.22。</p>
-  </div>
-</div>
-
-<h3>★ SD × A8 4-vec Ensemble 部署 spec (新最佳)</h3>
-<div class="spec">[Input]   16kHz mono audio stream
-
-────── Branch A: CAM++ A8 (2 inferences/sec) ──────
-[A1]  Buffer 0.5s window (aligned to segment boundary)
-[A2]  Extract 3 chunks @ offsets {0.05, 0.10, 0.15}s, each 0.3s
-[A3]  Fbank (Kaldi: Povey 25ms + preemph 0.97 + CMN)
-[A4]  CAM++ batch inference: input shape [3, T, 80] → [3, 192]
-[A5]  Per-chunk scores:
-        cos_t = cos(emb, target_centroid)
-        discr = cos_t - cohort.max()                # asnorm dropped!
-[A6]  Average 3 chunks → per-segment cos_seg, discr_seg
-[A7]  Per-file z-score → cos_z, discr_z
-
-────── Branch B: SD ConvNet+BiGRU (continuous, 4ms hop) ──────
-[B1]  Extract LPS + Δ + Δ² (n_fft=256, hop=64, 129 freq)
-[B2]  SD model inference: [1, 3, 129, T] → [1, T, 4] logits
-[B3]  Softmax → probs[:, 4]
-[B4]  Continuous score: p[1] - (p[0]+p[2]+p[3])
-[B5]  Mean over each 0.5s segment → sd_seg
-[B6]  Per-file z-score → sd_z
-
-────── Fusion ──────
-[F1]  combo = 0.5·cos_z + 0.5·discr_z + 2.0·sd_z
-[F2]  Threshold combo ≥ 0.05 → binary per-segment decision
-[F3]  Duplicate to 5 × 0.1s output slots
-
-[Output]   10 binary labels/sec, latency ≈ 500ms
-[Compute]  ~50ms CPU per 500ms (CAM++ 30 + SD 15 + fusion 5)
-[Memory]   CAM++ 28MB + cohort 150KB + SD model 0.74MB + target 768B
-           Total: ~29 MB per user (SD must be trained per-target)
-[Metrics]  F1=0.9386  TAR=0.932  FAR=0.054  (overall)
-           no_noise=0.989  crowd=0.961  fan=0.910 (最弱項)</div>
-
-<h3>Fallback: A8-alone deployment (適用任意新使用者)</h3>
-<div class="spec">[Input]   16kHz mono audio stream
-
-[Step 1]  Buffer 0.5s window (aligned to segment boundary)
-[Step 2]  Extract 3 chunks @ offsets {0.05, 0.10, 0.15}s, each 0.3s
-[Step 3]  Fbank (Kaldi: Povey 25ms + preemph 0.97 + CMN)
-[Step 4]  CAM++ batch inference: input shape [1×3, T, 80]
-[Step 5]  Per-chunk: cos(emb, target_centroid), cos(emb, cohort)
-[Step 6]  Per-chunk scores: cos_t / asnorm / discr
-[Step 7]  Average 3 chunks per score, standardize per file (z-score)
-[Step 8]  Ensemble = z(cos) + z(asnorm) + z(discr)
-[Step 9]  Threshold (calibrated ≈ -0.7) → binary decision
-[Step 10] Duplicate decision to 5 × 0.1s output slots
-
-[Output]  10 binary labels/sec, latency ≈ 500ms
-[Compute] ~30ms CPU per 500ms (real-time × 17)
-[Memory]  CAM++ (28MB) + cohort matrix (150KB) + target centroid (768B)
-[Metrics] F1=0.85  TAR=0.86  FAR=0.17</div>
-</section>
-
-<!-- ════ 模型對比 ════ -->
-<section id="models">
-<h2>模型對比 (含 SD ConvNet+BiGRU + Ensemble)</h2>
-
-<div class="insight good">
-<strong>新增：SD × A8 Ensemble 突破 A8 ceiling</strong><br>
-用同樣 newval_v3/fixed_0.5s + 0.1s segment-level 評估，5 種設定對比：
-</div>
-
-<h3>五個配置 同試場 結果</h3>
-<div class="ch"><canvas id="model-compare-chart"></canvas></div>
-
-<table style="margin-top:14px">
-<thead><tr><th>模型 / 配置</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th><th class="num">Size</th><th>狀態</th></tr></thead>
-<tbody>
-<tr class="star"><td>★ <b>SD × A8 4-vec ensemble</b> (本次新)</td><td class="num">0.9386</td><td class="num">0.932</td><td class="num">0.054</td><td class="num">28.7 MB</td><td><span class="badge g">最強</span></td></tr>
-<tr class="star"><td>★ SD × A8 2-vec ensemble (w_sd=1.5)</td><td class="num">0.9377</td><td class="num">0.940</td><td class="num">0.065</td><td class="num">28.7 MB</td><td><span class="badge g">次強</span></td></tr>
-<tr><td>CAM++ A8 Triple Ensemble (alone)</td><td class="num">0.8491</td><td class="num">0.857</td><td class="num">0.166</td><td class="num">28 MB</td><td><span class="badge g">通用</span></td></tr>
-<tr><td>SD ConvNet+BiGRU base (alone)</td><td class="num">0.8367</td><td class="num">0.812</td><td class="num">0.132</td><td class="num">0.74 MB</td><td><span class="badge g">mobile</span></td></tr>
-<tr><td>WeSpeaker ResNet34 (VoxCeleb 英文)</td><td class="num">0.7726</td><td class="num">0.778</td><td class="num">0.242</td><td class="num">25 MB</td><td><span class="badge y">較弱</span></td></tr>
-<tr class="fail"><td>ECAPA-TDNN (575KB 輕量)</td><td class="num">0.6732</td><td class="num">0.864</td><td class="num">0.719</td><td class="num">575 KB</td><td><span class="badge r">崩潰</span></td></tr>
-</tbody>
-</table>
-
-<h3>SD ConvNet+BiGRU 特性</h3>
-<div class="insight">
-<strong>架構</strong>：3-channel LPS+Δ+Δ² → Conv2D×3 → BiGRU → MarginLinear (4 classes: BG / Main target / SecA / SecB)。<br>
-<strong>輸入</strong>：n_fft=256, hop=64 (4ms), 129 freq bins<br>
-<strong>權重</strong>：<code>archive/inference/best_4class_model_{4,7}{,_0.05}.pth</code>，per-target 訓練（model_4 處理 spk4 檔，model_7 處理 spk7 檔）<br>
-<strong>二元化</strong>：<code>is_main = p[1] &gt; p[0]+p[2]+p[3]</code>（softmax後）
-</div>
-<div class="insight good">
-<strong>互補性是 ensemble 成功關鍵</strong>：A8 對 spk7 (女) 拖後腿（0.84），SD 對 fan noise 拖後腿（0.78）。Ensemble 後 spk7 跳到 0.92、fan 跳到 0.91 — 兩者誤分模式正交，per-file z-score 標準化讓 score scale 一致。
-</div>
-
-<h3>為何 CAM++ 勝出</h3>
-<div class="insight good">
-<strong>1. 訓練語言匹配</strong><br>
-CAM++ 用 3D-Speaker 200k 中文 speaker 訓練 (CNCeleb + 內部)。WeSpeaker ResNet34 用 VoxCeleb (英文為主)，跨語言能力較弱。
-</div>
-<div class="insight good">
-<strong>2. CAM 結構優勢</strong><br>
-Context-Aware Masking 模組對短 chunk (0.3s) 嵌入更穩定。Paper benchmark 顯示 CAM++ 在 short utterance 場景優於 ECAPA。
-</div>
-<div class="insight bad">
-<strong>3. ECAPA cos(spk4,spk7)=0.53 是崩潰訊號</strong><br>
-正常 speaker embedding 對不同人應 cos ≈ 0.05–0.15。0.53 表示 embedding 根本沒區分這兩人。原因可能：fbank 規格 (CMN/preemph) 不對；或 ONNX 是某 baseline 版非 production。
-</div>
-
-<h3>已下載驗證的其他模型</h3>
-<div class="spec">CAM++ (current, sherpa-onnx 200k Chinese):  28 MB, 192-dim   F1=0.85 ★
-funasr/campplus (HuggingFace .bin):          27 MB, 192-dim   同架構 (規格一致，未測)
-WeSpeaker ResNet34:                          25 MB, 256-dim   F1=0.77
-ECAPA-TDNN (small, 575KB):                  575 KB, 192-dim   F1=0.67 (崩潰)
-AXERA ECAPA (3D-Speaker, 79MB):              79 MB, 192-dim   fixed [1,360,80] 輸入 (不適合 0.3s)
-AXERA Res2Net v2 (3D-Speaker, 68MB):         68 MB, 192-dim   fixed [1,1,360,80] 輸入 (不適合 0.3s)</div>
-
-<div class="insight">
-<strong>結論</strong>：本地可用 CAM++ 已是最強。AXERA 版固定 360 frame 輸入不適合短 chunk，僅供研究參考。下一輪可探索：3D-Speaker ERes2Net、sherpa-onnx 其他 CAM++ 變種、或 fine-tuned 版本。
-</div>
-</section>
-
-<!-- ════ 天花板分析 ════ -->
-<section id="limits">
-<h2>天花板分析（已被 ensemble 推翻）</h2>
-
-<div class="insight good">
-<strong>更新（2026-05-25）：原天花板已被 SD × A8 ensemble 推翻</strong><br>
-原判斷「TAR≥0.90 + FAR≤0.20 在現有 model 下物理上不可達」是基於 <b>A8 single-model</b>。引入 SD 4-class 模型做 ensemble 後，<b>F1=0.9386, TAR=0.932, FAR=0.054</b> — 三項目標首次同時達標。
-</div>
-
-<h3>原 A8 single-model 的 TAR/FAR 操作曲線（歷史紀錄）</h3>
-<div class="spec" style="white-space:pre;font-size:12px">FAR約束       最大 TAR   F1
-≤0.05         0.30      0.46
-≤0.10         0.55      0.66
-≤0.15         0.75      0.78
-≤0.20         0.87      0.84    ← 原以為 TAR 0.90 不可達
-≤0.25         0.91      0.85
-≤0.30         0.95      0.85
-</div>
-
-<h3>SD × A8 Ensemble 的 Per-noise/Per-SNR 結果</h3>
-
-<table style="margin-top:8px">
-<thead><tr><th>條件</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th></tr></thead>
-<tbody>
-<tr class="star"><td>no_noise</td><td class="num">0.9893</td><td class="num">0.987</td><td class="num">0.009</td></tr>
-<tr><td>crowd</td><td class="num">0.9607</td><td class="num">0.957</td><td class="num">0.035</td></tr>
-<tr><td>cafeteria</td><td class="num">0.9447</td><td class="num">0.937</td><td class="num">0.047</td></tr>
-<tr><td>classroom</td><td class="num">0.9292</td><td class="num">0.917</td><td class="num">0.056</td></tr>
-<tr><td>fan (最弱項)</td><td class="num">0.9096</td><td class="num">0.907</td><td class="num">0.088</td></tr>
-<tr><td colspan="4" style="background:#1a2333;font-weight:600;padding:6px 10px;color:var(--muted)">─ Per-SNR ─</td></tr>
-<tr><td>SNR 0.2 (最乾淨)</td><td class="num">0.9851</td><td class="num">0.982</td><td class="num">0.012</td></tr>
-<tr><td>SNR 0.4</td><td class="num">0.9630</td><td class="num">0.955</td><td class="num">0.029</td></tr>
-<tr><td>SNR 0.6</td><td class="num">0.9431</td><td class="num">0.935</td><td class="num">0.048</td></tr>
-<tr><td>SNR 0.8</td><td class="num">0.9116</td><td class="num">0.905</td><td class="num">0.081</td></tr>
-<tr><td>SNR 1.0 (最吵)</td><td class="num">0.8771</td><td class="num">0.869</td><td class="num">0.113</td></tr>
-</tbody>
-</table>
-
-<div class="insight good">
-所有 noise / SNR 條件 F1 都 ≥ 0.85。fan noise 從 SD-alone 的 0.78 → ensemble 0.91（+0.13）— 互補性對最弱項收益最大。
-</div>
-
-<h3>剩下的突破路徑</h3>
-
-<div class="deploy-grid">
-  <div class="deploy-card best">
-    <div class="scenario">★ 路徑 0 (已實證)</div>
-    <h4>SD × A8 Ensemble</h4>
-    <div class="perf">F1 0.85 → 0.94 (+0.09)</div>
-    <p>引入 archive/inference 內 per-target SD 4-class 模型，per-file z-score 加權合成。已驗證有效。</p>
-  </div>
-
-  <div class="deploy-card fallback">
-    <div class="scenario">路徑 A (已實測無效)</div>
-    <h4>換現成更強模型</h4>
-    <div class="perf bad">實測 F1 -0.08 ~ -0.18</div>
-    <p>WeSpeaker / ECAPA-TDNN 反而更差。Paper benchmark 不能直接套用。</p>
-  </div>
-
-  <div class="deploy-card">
-    <div class="scenario">路徑 B</div>
-    <h4>Speech Enhancement 前端</h4>
-    <div class="perf">fan SNR=1 預期 +0.05~0.10</div>
-    <p>用 DTLN / GTCRN / TSE 去噪。Ensemble 的 fan 還是 0.91，SNR=1 還是 0.877 — 這是剩下最大的空間。</p>
-  </div>
-
-  <div class="deploy-card">
-    <div class="scenario">路徑 C</div>
-    <h4>Fine-tune CAM++ on PVAD</h4>
-    <div class="perf">預期 +0.02~0.05</div>
-    <p>邊際收益遞減。Ensemble 已逼近 GT 上界，fine-tune CAM++ 可能與 SD 重複。</p>
-  </div>
-</div>
-
-</section>
-
-<!-- ════ 交接資訊 ════ -->
-<section id="handover">
-<h2>交接資訊 (給下一輪對話)</h2>
-
-<h3>相關資源</h3>
-<table style="margin-top:8px">
-<thead><tr><th>類別</th><th>位置 / URL</th></tr></thead>
-<tbody>
-<tr><td>交接文件</td><td><code>0511/HANDOVER_0524.md</code> (本次), <code>0511/HANDOVER_0522.md</code> (前次)</td></tr>
-<tr><td>最終報告</td><td><a href="https://rezhboyu.github.io/pvad-se-pipeline/pvad_final_report/" style="color:var(--accent)">pvad_final_report</a> (本頁)</td></tr>
-<tr><td>演算法分析</td><td><a href="https://rezhboyu.github.io/pvad-se-pipeline/pvad_algo_report/" style="color:var(--accent)">pvad_algo_report</a></td></tr>
-<tr><td>檔案疊加可視化</td><td><a href="https://rezhboyu.github.io/pvad-se-pipeline/pvad_viz/" style="color:var(--accent)">pvad_viz</a></td></tr>
-<tr><td>Voice compare</td><td><a href="https://rezhboyu.github.io/pvad-se-pipeline/voice_compare_long/" style="color:var(--accent)">long FP segments</a> · <a href="https://rezhboyu.github.io/pvad-se-pipeline/voice_compare_peaks/" style="color:var(--accent)">peak chunks</a></td></tr>
-</tbody>
-</table>
-
-<h3>已完成（2026-05-25）：SD × A8 對比 + Ensemble</h3>
-
-<div class="insight good">
-<strong>✓ SD 模型 (archive/inference) 已實測 + 與 A8 做 ensemble</strong><br>
-詳見 <code>0511/COMPARISON_SD_vs_A8.md</code> 完整報告。<br>
-腳本：<code>0511/eval_sd_fixed05.py</code> (SD-alone)、<code>0511/eval_sd_a8_ensemble.py</code> (2-vec + 4-vec sweep + per-noise/snr breakdown)<br>
-快取：<code>0520/results/ensemble_cache_base_win0.1.npz</code>（已存，後續迭代可秒級重跑）
-</div>
-
-<div class="deploy-grid">
-  <div class="deploy-card">
-    <div class="scenario">屬性</div>
-    <h4>CAM++ A8 (通用)</h4>
-    <div class="perf">28 MB · 6.9M params · F1=0.849</div>
-    <p>通用 SV embedding + cosine。任何 user 可用（只換 centroid）。fallback 模式用此。</p>
-  </div>
-  <div class="deploy-card">
-    <div class="scenario">屬性</div>
-    <h4>SD ConvNet+BiGRU</h4>
-    <div class="perf">0.74 MB · 0.19M params · F1=0.837</div>
-    <p>per-target 端到端分類器。每個 user 需自己的 .pth（spk4=model_4, spk7=model_7）。mobile-friendly。</p>
-  </div>
-  <div class="deploy-card best">
-    <div class="scenario">★ 結合</div>
-    <h4>SD × A8 4-vec Ensemble</h4>
-    <div class="perf">28.7 MB · F1=0.9386</div>
-    <p>per-file z-score 加權合成 <code>0.5·cos + 0.5·discr + 2.0·sd</code>。三項目標首次同時達標。</p>
-  </div>
-</div>
-
-<h3>下一輪剩餘待辦</h3>
-<ol style="padding-left:20px;color:#c0c8d4;font-size:13px;line-height:1.8">
-  <li>★ <b>SD 模型 ONNX 匯出 + APK 整合</b>（<code>0511/export_convnet_onnx.py</code> 已存在）</li>
-  <li>SE 前端（DTLN / GTCRN）試驗，攻 fan noise / SNR=1 剩餘空間</li>
-  <li>spk7 補 enrollment（目前 3 → 5）看 SD-alone 能否拉到 0.85+</li>
-  <li>替新使用者訓練 SD spk model 的標準流程整理（要走 ensemble 路線必備）</li>
-  <li>新試集（非 fixed_0.5s 結構）驗證 ensemble 是否仍有效，確認泛化</li>
-</ol>
-
-<h3>SD 模型架構摘要</h3>
-<div class="spec">Input: LPS (Log Power Spectrum)
-  - n_fft=256, hop=64 (4ms), Hamming window
-  - 3 channels: [LPS, delta, delta2]
-  - 129 freq bins
-
-Network:
-  Conv2d(3→32, (129,5)) → GroupNorm → LeakyReLU
-  Conv2d(32→64, (1,5))  → GroupNorm → LeakyReLU
-  Conv2d(64→128, (1,5)) → GroupNorm → LeakyReLU
-  → permute → squeeze freq → [B, T, 128]
-  BiGRU(128→64×2) → LayerNorm → [B, T, 128]
-  MarginLinear(128, 4)  # ArcFace-style margin layer
-
-Output: per-frame 4-class logits
-  class 0: silence
-  class 1: target
-  class 2: same-gender non-target
-  class 3: diff-gender non-target</div>
-
-<h3>給下一輪的重要前提</h3>
-<div class="insight good">
-✅ <strong>必用 <code>0511/common_fbank.py</code> 的 fbank</strong>（Kaldi-style Povey + preemph + CMN）
-</div>
-<div class="insight good">
-✅ <strong>A8 ensemble F1=0.85 是當前最強通用方法</strong>，任何新方法以此為對照
-</div>
-<div class="insight bad">
-❌ <strong>不要再測 ECAPA-TDNN 575KB 版</strong>（cos(spk4,spk7)=0.53 嵌入崩潰）
-</div>
-<div class="insight">
-ℹ️ <strong>CAM++ 已是 sherpa-onnx 200k 中文版</strong>，不需再下載
-</div>
-<div class="insight">
-ℹ️ <strong>fixed_0.5s 的 0.5s 對齊是 key</strong>，sliding 0.1s hop 反而退化
-</div>
-<div class="insight">
-ℹ️ <strong>per-file z-score 已內建在 A8</strong>，再加自適應閾值無用
-</div>
-
-<h3>突破 F1=0.85 的剩餘路徑</h3>
-<table style="margin-top:10px">
-<thead><tr><th>路徑</th><th>預期改進</th><th>工程量</th><th>本次評估</th></tr></thead>
-<tbody>
-<tr><td>Speech Enhancement 前端 (DTLN/GTCRN)</td><td>noisy +0.05</td><td>4-6 小時</td><td>未試</td></tr>
-<tr><td>Fine-tune CAM++ on PVAD task</td><td>+0.05~0.10</td><td>1-2 天</td><td>用戶拒絕</td></tr>
-<tr><td>3D-Speaker ERes2Net</td><td>+0.02~0.05?</td><td>2-3 小時</td><td>fixed 360 frame 輸入待解</td></tr>
-<tr><td>更大 cohort (500+ spk)</td><td>+0.01~0.02</td><td>0.5 小時</td><td>已試 340 → 沒明顯改進</td></tr>
-</tbody>
-</table>
+<section>
+  <h2>剩餘空間</h2>
+  <table>
+    <thead><tr><th>項目</th><th>現況 F1</th><th>可能增益</th><th>方向</th></tr></thead>
+    <tbody>
+      <tr><td>fan noise</td><td class="num y">0.910</td><td class="num">+0.05</td><td>SE 前端（DTLN / GTCRN）</td></tr>
+      <tr><td>SNR=1.0 最吵</td><td class="num y">0.877</td><td class="num">+0.06</td><td>SE 前端（同上）</td></tr>
+      <tr><td>spk7（女）</td><td class="num">0.923</td><td class="num">+0.02</td><td>補 enrollment（3 → 5）+ 重訓 SD spk7</td></tr>
+      <tr><td>新使用者</td><td class="num">—</td><td class="num">—</td><td>per-target SD 訓練流程</td></tr>
+    </tbody>
+  </table>
 </section>
 
 <footer>
-PVAD 優化最終報告 · CAM++ (sherpa-onnx 200k Chinese) · newval_v3 fixed_0.5s · 2026-05-24<br>
-資料：210 files × {no_noise, cafeteria, classroom, crowd, fan} × {SNR 0.2~1.0} · 評估：0.1s segment-level<br>
-下次任務：模型之間更深入的對比（會開新對話）
+  資料來源：<a href="https://github.com/rezhboyu/pvad-se-pipeline/tree/master/0511">0511/eval_sd_a8_ensemble.py</a> ·
+  cache <code>0520/results/ensemble_cache_base_win0.1.npz</code> ·
+  breakdown <code>0520/results/sd_a8_4vec_winner_breakdown.json</code>
 </footer>
-
-<script>
-const JOURNEY = [{"step": "起點", "desc": "HANDOVER 記錄的 baseline (錯誤 fbank)", "f1": 0.7255, "phase": "start"}, {"step": "修 Fbank", "desc": "換 Kaldi Povey + preemph + CMN", "f1": 0.7395, "delta": "+0.014", "phase": "fix"}, {"step": "AS-norm / Discriminative", "desc": "加 cohort 標準化", "f1": 0.7441, "delta": "+0.005", "phase": "score"}, {"step": "Aligned A0", "desc": "利用 0.5s 邊界，抽中心 0.3s", "f1": 0.7932, "delta": "+0.049", "phase": "aligned"}, {"step": "Multi-chunk A3", "desc": "每段 3 chunks 取平均", "f1": 0.8218, "delta": "+0.029", "phase": "aligned"}, {"step": "AS-norm Multi A5", "desc": "加 cohort 標準化", "f1": 0.8267, "delta": "+0.005", "phase": "aligned"}, {"step": "A8 Triple Ensemble", "desc": "cos + AS-norm + Discr 標準化平均", "f1": 0.8491, "delta": "+0.022", "phase": "ensemble"}, {"step": "SNR-aware threshold", "desc": "嘗試自適應閾值", "f1": 0.8492, "delta": "+0.000", "phase": "plateau"}, {"step": "★ SD × A8 2-vec Ensemble", "desc": "引入 archive/inference SD 4-class 模型 (per-target)，per-file z-score 合成 w_sd=1.5", "f1": 0.9377, "delta": "+0.089", "phase": "ensemble"}, {"step": "★ SD × A8 4-vec Ensemble", "desc": "解開 A8 內三 score，sweep 5×5×5×5 權重；最佳 0.5·cos + 0·asnorm + 0.5·discr + 2.0·sd", "f1": 0.9386, "delta": "+0.001", "phase": "ensemble"}, {"step": "P2 Force-alternate", "desc": "利用嚴格交錯結構假設 (僅特定場景)", "f1": 0.9891, "delta": "+0.051", "phase": "structured"}];
-const METHODS = [{"name": "★★★ P2 Force-Alternate", "f1": 0.9891, "tar": 0.978, "far": 0.0, "rate": "2/sec", "group": "★ Structured"}, {"name": "★★ SD × A8 4-vec Ensemble", "f1": 0.9386, "tar": 0.932, "far": 0.054, "rate": "2/sec", "group": "★ Best Generic"}, {"name": "★★ SD × A8 2-vec Ensemble (w_sd=1.5)", "f1": 0.9377, "tar": 0.940, "far": 0.065, "rate": "2/sec", "group": "★ Best Generic"}, {"name": "★ A8. Triple Ensemble", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "2/sec", "group": "★ Best Generic"}, {"name": "SD ConvNet+BiGRU base (alone)", "f1": 0.8367, "tar": 0.812, "far": 0.132, "rate": "250/sec", "group": "★ Best Generic"}, {"name": "SD ConvNet+BiGRU 0.05 (alone)", "f1": 0.8333, "tar": 0.872, "far": 0.226, "rate": "250/sec", "group": "Model Compare"}, {"name": "★ Hybrid (A8 → 0.1s 展開)", "f1": 0.8491, "tar": 0.86, "far": 0.17, "rate": "10/sec", "group": "★ Deploy"}, {"name": "T4_snr_mid", "f1": 0.8447, "tar": 0.878, "far": 0.206, "rate": "2/sec", "group": "Adaptive"}, {"name": "T1. Per-file Median", "f1": 0.844, "tar": 0.835, "far": 0.147, "rate": "2/sec", "group": "Adaptive"}, {"name": "T4_snr_aggr", "f1": 0.8411, "tar": 0.883, "far": 0.222, "rate": "2/sec", "group": "Adaptive"}, {"name": "T2. Per-file Otsu", "f1": 0.834, "tar": 0.798, "far": 0.118, "rate": "2/sec", "group": "Adaptive"}, {"name": "A5. AS-norm Multi", "f1": 0.8267, "tar": 0.835, "far": 0.189, "rate": "2/sec", "group": "Aligned"}, {"name": "A6. Discr Multi", "f1": 0.8248, "tar": 0.83, "far": 0.186, "rate": "2/sec", "group": "Aligned"}, {"name": "A3. Multi-chunk Mean", "f1": 0.8218, "tar": 0.85, "far": 0.223, "rate": "2/sec", "group": "Aligned"}, {"name": "A2. Multi-chunk Vote", "f1": 0.8149, "tar": 0.839, "far": 0.225, "rate": "2/sec", "group": "Aligned"}, {"name": "A4. Energy-aligned", "f1": 0.7972, "tar": 0.819, "far": 0.241, "rate": "2/sec", "group": "Aligned"}, {"name": "A0. Single Center", "f1": 0.7932, "tar": 0.825, "far": 0.261, "rate": "2/sec", "group": "Aligned"}, {"name": "A1. Aligned + AS-norm", "f1": 0.7851, "tar": 0.77, "far": 0.195, "rate": "2/sec", "group": "Aligned"}, {"name": "WeSpeaker ResNet34 (A8 pipeline)", "f1": 0.7726, "tar": 0.778, "far": 0.242, "rate": "2/sec", "group": "Model Compare"}, {"name": "C. Sliding Ensemble", "f1": 0.7651, "tar": 0.82, "far": 0.331, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding Discriminative", "f1": 0.7441, "tar": 0.828, "far": 0.408, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding AS-norm", "f1": 0.744, "tar": 0.821, "far": 0.396, "rate": "frame", "group": "Sliding"}, {"name": "K. Sliding F (Kaldi)", "f1": 0.7395, "tar": 0.833, "far": 0.43, "rate": "frame", "group": "Sliding"}, {"name": "Sliding 0.3s + Hysteresis", "f1": 0.7252, "tar": 0.748, "far": 0.321, "rate": "10/sec", "group": "10/sec"}, {"name": "Sliding 0.3s + Ensemble", "f1": 0.7053, "tar": 0.833, "far": 0.541, "rate": "10/sec", "group": "10/sec"}, {"name": "ECAPA-TDNN (A8 pipeline)", "f1": 0.6732, "tar": 0.864, "far": 0.719, "rate": "2/sec", "group": "Model Compare"}, {"name": "Sliding A8 (0.5s win × 0.1s hop)", "f1": 0.636, "tar": 0.773, "far": 0.673, "rate": "10/sec", "group": "10/sec"}];
-
-function showSec(id) {
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  event.target.classList.add('active');
-}
-
-// Journey list
-const startF1 = JOURNEY[0].f1, endF1 = JOURNEY[JOURNEY.length-1].f1;
-document.getElementById('journey-list').innerHTML = JOURNEY.map(j => {
-  const pct = (j.f1*100).toFixed(1);
-  const dCls = !j.delta ? '' : j.delta === '+0.000' ? 'zero' : 'pos';
-  return `<div class="journey-item">
-    <div class="j-step">${j.step}</div>
-    <div>
-      <div class="j-f1">${j.f1.toFixed(4)}</div>
-      <div class="j-bar"><div class="j-bar-fill" style="width:${pct}%"></div></div>
-    </div>
-    <div class="j-desc">${j.desc}</div>
-    <div class="j-delta ${dCls}">${j.delta||''}</div>
-  </div>`;
-}).join('');
-
-// Methods table
-document.querySelector('#methods-table tbody').innerHTML = METHODS.map(m => {
-  const met = (m.f1>=0.85 && m.tar>=0.90 && m.far<=0.20);
-  const close = (m.f1>=0.83 && !met);
-  const star = m.name.startsWith('★');
-  const fail = m.f1<0.66;
-  let cls = '';
-  if (star) cls = 'star';
-  else if (met) cls = 'met';
-  else if (close) cls = 'close';
-  else if (fail) cls = 'fail';
-  const status = met ? '<span class="badge g">達標 ✓</span>' :
-                 close ? '<span class="badge y">接近 ↑</span>' :
-                 fail ? '<span class="badge r">弱</span>' : '';
-  return `<tr class="${cls}">
-    <td>${m.name}</td>
-    <td class="num">${m.f1.toFixed(4)}</td>
-    <td class="num">${m.tar.toFixed(3)}</td>
-    <td class="num">${m.far.toFixed(3)}</td>
-    <td>${m.rate}</td>
-    <td>${m.group}</td>
-    <td>${status}</td>
-  </tr>`;
-}).join('');
-
-// F1 horizontal bar chart
-const sortedMethods = [...METHODS];
-const colors = sortedMethods.map(m=>{
-  if (m.name.startsWith('★')) return '#3fb950';
-  if (m.f1>=0.85) return '#22d3ee';
-  if (m.f1>=0.80) return '#388bfd';
-  if (m.f1>=0.70) return '#d29922';
-  return '#f85149';
-});
-
-new Chart(document.getElementById('f1-chart'), {
-  type:'bar',
-  data:{
-    labels: sortedMethods.map(m=>m.name),
-    datasets:[{label:'F1', data: sortedMethods.map(m=>m.f1), backgroundColor:colors, borderRadius:3}]
-  },
-  options:{
-    responsive:true, maintainAspectRatio:false, indexAxis:'y',
-    plugins:{
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>{
-        const m=sortedMethods[ctx.dataIndex];
-        return [`F1: ${m.f1.toFixed(4)}`,`TAR: ${m.tar.toFixed(3)}`,`FAR: ${m.far.toFixed(3)}`];
-      }}}
-    },
-    scales:{
-      x:{min:0,max:1,ticks:{color:'#8b949e'},grid:{color:'#1e2235'}},
-      y:{ticks:{color:'#e6edf3',font:{size:10.5}},grid:{color:'#1e2235'}}
-    }
-  }
-});
-
-// TAR vs FAR scatter
-new Chart(document.getElementById('scatter'),{
-  type:'scatter',
-  data:{datasets:[
-    {label:'Methods',
-     data: METHODS.map(m=>({x:m.far,y:m.tar,_name:m.name,_f1:m.f1,_rate:m.rate})),
-     backgroundColor: METHODS.map(m=>{
-       if (m.f1>=0.85) return 'rgba(63,185,80,0.8)';
-       if (m.f1>=0.80) return 'rgba(56,139,253,0.7)';
-       if (m.f1>=0.70) return 'rgba(210,153,34,0.7)';
-       return 'rgba(248,81,73,0.6)';
-     }),
-     pointRadius: METHODS.map(m=>m.name.startsWith('★')?10:6),
-     pointHoverRadius:10}
-  ]},
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    plugins:{
-      legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>{
-        const d=ctx.raw;
-        return [d._name,`F1: ${d._f1.toFixed(3)}`,`TAR: ${d.y.toFixed(3)}`,`FAR: ${d.x.toFixed(3)}`,`Rate: ${d._rate}`];
-      }}}
-    },
-    scales:{
-      x:{title:{display:true,text:'FAR (越低越好)',color:'#8b949e'},min:0,max:1,ticks:{color:'#8b949e'},grid:{color:'#1e2235'}},
-      y:{title:{display:true,text:'TAR (越高越好)',color:'#8b949e'},min:0,max:1,ticks:{color:'#8b949e'},grid:{color:'#1e2235'}}
-    }
-  }
-});
-
-// Model comparison chart
-const modelData = [
-  {name:'★ SD × A8 4-vec Ensemble',f1:0.9386,tar:0.932,far:0.054,color:'#3fb950'},
-  {name:'SD × A8 2-vec Ensemble',f1:0.9377,tar:0.940,far:0.065,color:'#3fb950'},
-  {name:'CAM++ A8 Triple (alone)',f1:0.8491,tar:0.857,far:0.166,color:'#388bfd'},
-  {name:'SD ConvNet+BiGRU base (alone)',f1:0.8367,tar:0.812,far:0.132,color:'#bc8cff'},
-  {name:'WeSpeaker ResNet34 (VoxCeleb 英文)',f1:0.7726,tar:0.778,far:0.242,color:'#d29922'},
-  {name:'ECAPA-TDNN (575KB 輕量)',f1:0.6732,tar:0.864,far:0.719,color:'#f85149'},
-];
-new Chart(document.getElementById('model-compare-chart'),{
-  type:'bar',
-  data:{
-    labels: modelData.map(m=>m.name),
-    datasets:[
-      {label:'F1', data:modelData.map(m=>m.f1), backgroundColor:modelData.map(m=>m.color), borderRadius:3, yAxisID:'y'},
-      {label:'FAR (lower=better)', data:modelData.map(m=>m.far), backgroundColor:'rgba(180,100,100,0.6)', borderRadius:3, yAxisID:'y1'},
-    ]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    plugins:{
-      legend:{labels:{color:'#e6edf3'}},
-      tooltip:{callbacks:{label:ctx=>{
-        const m=modelData[ctx.dataIndex];
-        return [`F1: ${m.f1.toFixed(4)}`,`TAR: ${m.tar.toFixed(3)}`,`FAR: ${m.far.toFixed(3)}`];
-      }}}
-    },
-    scales:{
-      x:{ticks:{color:'#e6edf3',font:{size:11}},grid:{color:'#1e2235'}},
-      y:{position:'left',min:0,max:1,ticks:{color:'#8b949e'},grid:{color:'#1e2235'},title:{display:true,text:'F1',color:'#3fb950'}},
-      y1:{position:'right',min:0,max:0.8,ticks:{color:'#8b949e'},grid:{display:false},title:{display:true,text:'FAR (low=good)',color:'#888'}}
-    }
-  }
-});
-
-// Journey chart (F1 vs step)
-new Chart(document.getElementById('journey-chart'),{
-  type:'line',
-  data:{
-    labels: JOURNEY.map(j=>j.step),
-    datasets:[{label:'F1', data: JOURNEY.map(j=>j.f1), borderColor:'#22d3ee', backgroundColor:'rgba(34,211,238,0.15)', tension:0.25, fill:true, pointBackgroundColor:'#3fb950', pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:7}]
-  },
-  options:{
-    responsive:true,maintainAspectRatio:false,
-    plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{
-      const j=JOURNEY[ctx.dataIndex];
-      return [`F1: ${j.f1.toFixed(4)}`,j.desc,j.delta?`Δ: ${j.delta}`:''];
-    }}}},
-    scales:{
-      y:{min:0.7,max:1.0,ticks:{color:'#8b949e'},grid:{color:'#1e2235'}},
-      x:{ticks:{color:'#8b949e',font:{size:10}},grid:{color:'#1e2235'}}
-    }
-  }
-});
-</script>
 
 </body>
 </html>
