@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PVAD-SE Pipeline · 頁面總入口</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--card-h:#1c2128;--border:#21262d;
+       --accent:#388bfd;--green:#3fb950;--text:#e6edf3;--muted:#8b949e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.6 "Segoe UI",system-ui,sans-serif;
+     min-height:100vh;padding:32px 20px;max-width:1100px;margin:0 auto}
+header{margin-bottom:28px}
+header h1{font-size:1.7rem;letter-spacing:-.5px}
+header p{color:var(--muted);margin-top:8px;font-size:.95rem}
+header .meta{margin-top:14px;padding:14px 18px;background:var(--card);
+              border:1px solid var(--border);border-radius:10px;font-size:.85rem;line-height:1.7}
+header .meta strong{color:var(--green)}
+header .meta code{background:#1f242c;padding:1px 6px;border-radius:4px;color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;
+       text-decoration:none;color:inherit;transition:all .15s;display:block}
+.card:hover{background:var(--card-h);border-color:var(--accent);transform:translateY(-1px)}
+.card-title{font-size:1rem;font-weight:600;color:var(--accent);margin-bottom:4px}
+.card-path{font-size:.78rem;color:var(--muted);margin-bottom:8px;font-family:monospace}
+.card-path code{color:var(--muted)}
+.card-desc{font-size:.85rem;color:#c0c8d4;line-height:1.5}
+footer{margin-top:36px;padding-top:16px;border-top:1px solid var(--border);
+        color:var(--muted);font-size:.8rem;text-align:center}
+footer a{color:var(--accent);text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>PVAD-SE Pipeline · 頁面總入口</h1>
+  <p>Personalized VAD + Speech Enhancement 全部評估報告與可視化頁面。</p>
+  <div class="meta">
+    <strong>當前最佳</strong> · SD × A8 4-vector Ensemble · <strong>F1 = 0.9386</strong>
+    · TAR 0.932 · FAR 0.054 · 三項目標首次同時達標<br>
+    <span style="color:var(--muted)">評估集 <code>newval_v3/fixed_0.5s</code> 210 檔 · 0.1s segment-level</span>
+  </div>
+</header>
+
+<div class="grid">
+  <a href="./pvad_final_report/" class="card">
+    <div class="card-title">最終報告</div>
+    <div class="card-path"><code>pvad_final_report/</code></div>
+    <div class="card-desc">F1=0.94 SD×A8 Ensemble</div>
+  </a>
+  <a href="./pvad_algo_report/" class="card">
+    <div class="card-title">演算法分析</div>
+    <div class="card-path"><code>pvad_algo_report/</code></div>
+    <div class="card-desc">A8 / Sliding / Aligned methods</div>
+  </a>
+  <a href="./pvad_viz/" class="card">
+    <div class="card-title">疊加可視化</div>
+    <div class="card-path"><code>pvad_viz/</code></div>
+    <div class="card-desc">Per-file spectrogram + GT/Pred</div>
+  </a>
+  <a href="./voice_compare/" class="card">
+    <div class="card-title">Cohort 相似</div>
+    <div class="card-path"><code>voice_compare/</code></div>
+    <div class="card-desc">Target vs cohort cosine</div>
+  </a>
+  <a href="./voice_compare_chunks/" class="card">
+    <div class="card-title">Chunks</div>
+    <div class="card-path"><code>voice_compare_chunks/</code></div>
+    <div class="card-desc">Chunk-level cosine</div>
+  </a>
+  <a href="./voice_compare_long/" class="card">
+    <div class="card-title">Long FP</div>
+    <div class="card-path"><code>voice_compare_long/</code></div>
+    <div class="card-desc">Long false-positive segments</div>
+  </a>
+  <a href="./voice_compare_peaks/" class="card">
+    <div class="card-title">FP Peaks</div>
+    <div class="card-path"><code>voice_compare_peaks/</code></div>
+    <div class="card-desc">Peak false-positive chunks</div>
+  </a>
+  <a href="./voice_compare_trace/" class="card">
+    <div class="card-title">FP Trace</div>
+    <div class="card-path"><code>voice_compare_trace/</code></div>
+    <div class="card-desc">Full-context FP audio</div>
+  </a>
+  <a href="./inspector/" class="card">
+    <div class="card-title">Inspector</div>
+    <div class="card-path"><code>inspector/</code></div>
+    <div class="card-desc">Audio inspector tool</div>
+  </a>
+  <a href="./audio-demo/" class="card">
+    <div class="card-title">Audio Demo</div>
+    <div class="card-path"><code>audio-demo/</code></div>
+    <div class="card-desc">Pipeline audio samples</div>
+  </a>
+  <a href="./demo/static/" class="card">
+    <div class="card-title">Live Demo</div>
+    <div class="card-path"><code>demo/static/</code></div>
+    <div class="card-desc">Realtime demo UI</div>
+  </a>
+  <a href="./report/" class="card">
+    <div class="card-title">Report</div>
+    <div class="card-path"><code>report/</code></div>
+    <div class="card-desc">Legacy report</div>
+  </a>
+</div>
+
+<footer>
+  Source: <a href="https://github.com/rezhboyu/pvad-se-pipeline">github.com/rezhboyu/pvad-se-pipeline</a>
+  · Updated 2026-05-25
+</footer>
+</body>
+</html>
