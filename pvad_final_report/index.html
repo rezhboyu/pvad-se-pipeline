@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PVAD 最終報告 — GRU alone vs GRU × CAM++ Ensemble</title>
+<title>PVAD 最終報告 — CAM++ vs GRU</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#0d1117;--card:#161b22;--card2:#1a1f28;--border:#21262d;
       --accent:#388bfd;--green:#3fb950;--yellow:#d29922;--red:#f85149;
-      --cyan:#22d3ee;--purple:#bc8cff;--text:#e6edf3;--muted:#7d8590;
-      --gru:#bc8cff;--ens:#3fb950}
+      --cyan:#22d3ee;--purple:#bc8cff;--orange:#fb923c;
+      --text:#e6edf3;--muted:#7d8590;
+      --cam:#fb923c;--gru:#22d3ee;--ens:#3fb950}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:14px/1.6 'Segoe UI',system-ui,sans-serif;
      max-width:1100px;margin:0 auto;padding:18px}
@@ -21,9 +22,11 @@ header .lead{color:var(--muted);font-size:.82rem}
 .legend{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;font-size:12px}
 .legend .item{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;
               border-radius:99px;background:var(--card2);border:1px solid var(--border)}
+.legend .item.cam{border-color:var(--cam)}
 .legend .item.gru{border-color:var(--gru)}
-.legend .item.ens{border-color:var(--ens)}
+.legend .item.ens{border-color:var(--ens);opacity:.75}
 .legend .swatch{display:inline-block;width:10px;height:10px;border-radius:2px}
+.legend .item.cam .swatch{background:var(--cam)}
 .legend .item.gru .swatch{background:var(--gru)}
 .legend .item.ens .swatch{background:var(--ens)}
 .legend .name{font-weight:600}
@@ -41,28 +44,28 @@ th{color:var(--muted);text-align:left;padding:6px 9px;border-bottom:1px solid va
 th.num,td.num{text-align:right}
 td{padding:5px 9px;border-bottom:1px solid #1e2133}
 .num{font-family:'JetBrains Mono',Consolas,monospace}
+.num.cam{color:var(--cam)}
 .num.gru{color:var(--gru)}
-.num.ens{color:var(--ens);font-weight:600}
+.num.ens{color:var(--ens)}
+.num.win{font-weight:700}
 .num.dim{color:var(--muted)}
 .delta{font-family:monospace;font-size:11px}
 .delta.p{color:var(--green)}
 .delta.n{color:var(--red)}
 .delta.z{color:var(--muted)}
 
-.headline{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px;align-items:center;
-          padding:10px 14px;background:var(--card2);border-radius:8px;margin-bottom:10px;
+.headline{display:grid;grid-template-columns:1fr 80px 1fr;gap:10px;align-items:center;
+          padding:14px 16px;background:var(--card2);border-radius:8px;margin-bottom:10px;
           border:1px solid var(--border)}
-.headline .hcell{display:flex;flex-direction:column;gap:2px}
-.headline .hcell .hlabel{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
-.headline .hcell .hval{font-size:1.4rem;font-weight:700;font-family:'JetBrains Mono',Consolas,monospace;letter-spacing:-.5px}
+.headline .hcell{display:flex;flex-direction:column;gap:3px;align-items:center}
+.headline .hcell .hlabel{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600}
+.headline .hcell .hval{font-size:1.7rem;font-weight:700;font-family:'JetBrains Mono',Consolas,monospace;letter-spacing:-.5px}
+.headline .hcell.cam .hval{color:var(--cam)}
 .headline .hcell.gru .hval{color:var(--gru)}
-.headline .hcell.ens .hval{color:var(--ens)}
 .headline .hcell .sub{font-size:11px;color:var(--muted);font-family:monospace}
-.headline .arrow{text-align:center;font-size:1.3rem;color:var(--muted)}
-.headline .gain{text-align:center;font-family:'JetBrains Mono',Consolas,monospace;
-                color:var(--green);font-size:.95rem;font-weight:700}
-.headline .gain .label{display:block;font-size:9.5px;color:var(--muted);font-weight:500;
-                       text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.headline .vs{text-align:center;font-size:.9rem;color:var(--muted);font-weight:700;letter-spacing:1px}
+.headline .vs .gain{display:block;color:var(--gru);font-family:monospace;font-size:1.05rem;font-weight:700;margin-top:4px}
+.headline .vs .gain-label{display:block;color:var(--muted);font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
 
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:760px){.chart-grid{grid-template-columns:1fr}}
@@ -77,24 +80,29 @@ td{padding:5px 9px;border-bottom:1px solid #1e2133}
 .recipe .n{color:var(--yellow)}
 .recipe .v{color:var(--green)}
 
-.deploy{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:680px){.deploy{grid-template-columns:1fr}}
-.deploy .card{background:var(--card2);border:1px solid var(--border);
-              border-radius:8px;padding:12px 14px;border-left:3px solid var(--gru)}
-.deploy .card.ens{border-left-color:var(--ens)}
-.deploy .card .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.deploy .card h4{font-size:.95rem;font-weight:600;color:var(--gru)}
-.deploy .card.ens h4{color:var(--ens)}
-.deploy .card .price{font-family:monospace;font-size:.78rem;color:var(--muted)}
-.deploy .card .perf{font-family:'JetBrains Mono',Consolas,monospace;
-                    color:var(--text);font-size:.85rem;margin:6px 0 4px;
-                    background:rgba(255,255,255,0.04);padding:5px 8px;border-radius:5px}
-.deploy .card p{font-size:.78rem;color:#c0c8d4;line-height:1.5}
+.modelcards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+@media(max-width:680px){.modelcards{grid-template-columns:1fr}}
+.modelcards .card{background:var(--card2);border:1px solid var(--border);
+                  border-radius:8px;padding:12px 14px;border-left:3px solid var(--cam)}
+.modelcards .card.gru{border-left-color:var(--gru)}
+.modelcards .card .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.modelcards .card h4{font-size:.95rem;font-weight:600;color:var(--cam)}
+.modelcards .card.gru h4{color:var(--gru)}
+.modelcards .card .price{font-family:monospace;font-size:.75rem;color:var(--muted)}
+.modelcards .card .perf{font-family:'JetBrains Mono',Consolas,monospace;
+                        color:var(--text);font-size:.85rem;margin:6px 0 4px;
+                        background:rgba(255,255,255,0.04);padding:5px 8px;border-radius:5px}
+.modelcards .card p{font-size:.78rem;color:#c0c8d4;line-height:1.5}
+
+.bonus{background:rgba(63,185,80,.06);border:1px dashed rgba(63,185,80,.4);
+       border-radius:8px;padding:10px 14px;font-size:12px;color:#c0c8d4;line-height:1.6}
+.bonus strong{color:var(--ens)}
 
 footer{color:var(--muted);font-size:11px;text-align:center;padding:14px 0 4px}
 footer a{color:var(--accent);text-decoration:none}
 .note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55}
 .note code{background:#1f242c;padding:1px 5px;border-radius:3px;color:var(--purple)}
+.note b{color:var(--text)}
 </style>
 </head>
 <body>
@@ -214,48 +222,71 @@ footer a{color:var(--accent);text-decoration:none}
 
 
 <header>
-  <h1>PVAD 最終報告 · GRU alone vs GRU × CAM++ Ensemble</h1>
-  <p class="lead">同 pipeline (per-file z-score + 閾值)、同試場 newval_v3/fixed_0.5s 210 檔、0.1s segment-level metric · 2026-05-25</p>
+  <h1>PVAD 最終報告 · CAM++ vs GRU</h1>
+  <p class="lead">同 pipeline (per-file z-score + 閾值) · 同試場 newval_v3/fixed_0.5s 210 檔 · 0.1s segment-level metric · 2026-05-25</p>
 </header>
 
 <div class="legend">
-  <span class="item gru"><span class="swatch"></span><span class="name">GRU alone</span><span class="val">189K params · 0.74 MB · per-target</span></span>
-  <span class="item ens"><span class="swatch"></span><span class="name">GRU × CAM++ Ensemble</span><span class="val">189K + 6.9M · per-target + cohort</span></span>
+  <span class="item cam">
+    <span class="swatch"></span>
+    <span class="name">CAM++</span>
+    <span class="val">200k 中文 SV · 28 MB · 6.9M params · 通用</span>
+  </span>
+  <span class="item gru">
+    <span class="swatch"></span>
+    <span class="name">GRU (SD)</span>
+    <span class="val">ConvNet+BiGRU · 0.74 MB · 189K params · per-target</span>
+  </span>
+  <span class="item ens">
+    <span class="swatch"></span>
+    <span class="name">CAM++ × GRU Ensemble</span>
+    <span class="val">附錄 · 兩者合成的上界</span>
+  </span>
 </div>
 
 <section>
-  <h2>Headline overall <small>(三項目標 F1≥0.85 / TAR≥0.90 / FAR≤0.20)</small></h2>
+  <h2>Headline · 兩個單模型的真實對位</h2>
   <div class="headline">
+    <div class="hcell cam">
+      <span class="hlabel">CAM++ (A8)</span>
+      <span class="hval">0.8583</span>
+      <span class="sub">TAR 0.879 · FAR 0.170</span>
+    </div>
+    <div class="vs">
+      vs
+      <span class="gain">+0.065</span>
+      <span class="gain-label">GRU 領先</span>
+    </div>
     <div class="hcell gru">
-      <span class="hlabel">GRU alone</span>
+      <span class="hlabel">GRU</span>
       <span class="hval">0.9235</span>
       <span class="sub">TAR 0.926 · FAR 0.080</span>
     </div>
-    <div class="hcell ens">
-      <span class="hlabel">GRU × CAM++ Ensemble</span>
-      <span class="hval">0.9386</span>
-      <span class="sub">TAR 0.932 · FAR 0.054</span>
-    </div>
-    <div class="gain"><span class="label">F1 Δ</span>+0.015</div>
   </div>
-  <p class="note">兩者都跨過三項目標。<b>Ensemble 主要收益不在 F1，而在 FAR：從 0.080 → 0.054，誤報少 32%</b>，TAR 也微升 0.006。F1 邊際增益是 +0.015，給的是「最後一哩」。</p>
+  <p class="note">
+    <b>GRU 全面壓制 CAM++</b>：F1 +0.065、TAR +0.047、FAR −0.090。
+    GRU 只佔 CAM++ <b>2.6%</b> 的模型大小（0.74 MB vs 28 MB），但因為是 per-target 端到端訓練，
+    直接學「目標 vs 非目標」的判別，遠勝 CAM++ 的通用 speaker embedding 距離。
+  </p>
 </section>
 
 <section>
-  <h2>Recipe — 兩配置的計算公式</h2>
-  <div class="recipe"><span class="c"># Per 0.5s segment</span>
+  <h2>Recipe — 兩模型的計算規則</h2>
+  <div class="recipe"><span class="c"># Per 0.5s segment, both use per-file z-score + threshold sweep</span>
 
-<span class="k">GRU_alone</span> = zscore( mean<sub>4ms-frames</sub>( p[1] − (p[0] + p[2] + p[3]) ) )
-            <span class="c"># 連續分數，不是 binary rule p[1] &gt; rest (那只有 F1=0.84)</span>
-            <span class="c"># pred = GRU_alone ≥ -0.05</span>
+<span class="k">CAM++</span>  <span class="c">(原 A8 Triple Ensemble)</span>
+       cos    = cos(emb, target_centroid)                      <span class="c"># embedding 距離</span>
+       asnorm = (cos − cohort.mean()) / cohort.std()            <span class="c"># 對 cohort 標準化</span>
+       discr  = cos − max(cohort_cos)                           <span class="c"># 相對 cohort 邊距</span>
+       <span class="k">score</span>  = zscore(cos + asnorm + discr)                  <span class="c"># pred ≥ -0.15</span>
 
-<span class="k">ENS_4vec</span>  = <span class="v">0.5</span>·z(cos_target) + <span class="v">0.5</span>·z(cos_target − max(cos_cohort)) + <span class="v">2.0</span>·z(GRU)
-            <span class="c"># pred = ENS_4vec ≥ 0.05</span>
-            <span class="c"># 4D weight sweep (5×5×5×5) 後 asnorm 權重收斂到 0，被 GRU 訊息吸收</span></div>
+<span class="k">GRU</span>    <span class="c">(SD ConvNet+BiGRU, per-target 訓練)</span>
+       p[4]   = softmax( ConvNet(LPS+Δ+Δ²) → BiGRU → MarginFC ) <span class="c"># 4-class</span>
+       <span class="k">score</span>  = zscore( mean(p[1] − (p[0] + p[2] + p[3])) )      <span class="c"># pred ≥ -0.05</span></div>
 </section>
 
 <section>
-  <h2>可視化 · 條件對照</h2>
+  <h2>可視化 · 條件對照 (CAM++ vs GRU)</h2>
   <div class="chart-grid">
     <div>
       <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Per-noise F1</h3>
@@ -270,97 +301,112 @@ footer a{color:var(--accent);text-decoration:none}
       <div class="ch tall"><canvas id="spkChart"></canvas></div>
     </div>
     <div>
-      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Ensemble 收益分布 (F1 Δ)</h3>
-      <div class="ch tall"><canvas id="gainChart"></canvas></div>
+      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">GRU vs CAM++ 差距 (F1 Δ)</h3>
+      <div class="ch tall"><canvas id="gapChart"></canvas></div>
     </div>
   </div>
-  <p class="note">右下圖：每個條件下 ENS 比 GRU alone 多多少 F1。<b>fan 是最大贏家 (+0.033)</b>，其次 cafeteria 與 SNR=0.8。乾淨/低 SNR 條件 GRU 已逼近上限，ensemble 邊際收益小。</p>
+  <p class="note">
+    <b>反直覺發現</b>：右下圖中只有 <b>fan noise</b> 是 CAM++ 微勝（−0.005），其他全部 GRU 領先。
+    這就是為什麼 ensemble 仍有價值 — 兩者失敗模式不重疊，CAM++ 在 fan 補位 GRU。
+  </p>
 </section>
 
 <section>
-  <h2>數據表 · per-condition 明細</h2>
+  <h2>明細表 · 兩模型每條件數據</h2>
   <table>
     <thead>
       <tr>
         <th>Condition</th>
+        <th class="num">CAM++ F1</th><th class="num">CAM++ TAR</th><th class="num">CAM++ FAR</th>
         <th class="num">GRU F1</th><th class="num">GRU TAR</th><th class="num">GRU FAR</th>
-        <th class="num">ENS F1</th><th class="num">ENS TAR</th><th class="num">ENS FAR</th>
         <th class="num">ΔF1</th>
       </tr>
     </thead>
     <tbody>
       <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-speaker</td></tr>
       <tr><td>spk4 (User1, 男)</td>
-        <td class="num gru">0.9518</td><td class="num gru">0.957</td><td class="num gru">0.054</td>
-        <td class="num ens">0.9635</td><td class="num ens">0.962</td><td class="num ens">0.034</td>
-        <td class="delta p">+0.012</td></tr>
+        <td class="num cam">0.8867</td><td class="num cam">0.896</td><td class="num cam">0.125</td>
+        <td class="num gru win">0.9518</td><td class="num gru win">0.957</td><td class="num gru win">0.054</td>
+        <td class="delta p">+0.065</td></tr>
       <tr><td>spk7 (hsuan, 女)</td>
-        <td class="num gru">0.9062</td><td class="num gru">0.907</td><td class="num gru">0.095</td>
-        <td class="num ens">0.9233</td><td class="num ens">0.914</td><td class="num ens">0.066</td>
-        <td class="delta p">+0.017</td></tr>
+        <td class="num cam">0.8414</td><td class="num cam">0.869</td><td class="num cam">0.197</td>
+        <td class="num gru win">0.9062</td><td class="num gru win">0.907</td><td class="num gru win">0.095</td>
+        <td class="delta p">+0.065</td></tr>
 
       <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-noise</td></tr>
       <tr><td>no_noise</td>
-        <td class="num gru">0.9830</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9893</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.006</td></tr>
+        <td class="num cam">0.9625</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9830</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.020</td></tr>
       <tr><td>crowd</td>
-        <td class="num gru">0.9535</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9607</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.007</td></tr>
+        <td class="num cam">0.8577</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9535</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.096</td></tr>
       <tr><td>cafeteria</td>
-        <td class="num gru">0.9262</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9447</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.019</td></tr>
+        <td class="num cam">0.8624</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9262</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.064</td></tr>
       <tr><td>classroom</td>
-        <td class="num gru">0.9272</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9292</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.002</td></tr>
-      <tr><td>fan (最難)</td>
-        <td class="num gru">0.8763</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9096</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.033</td></tr>
+        <td class="num cam">0.8106</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9272</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.117</td></tr>
+      <tr><td>fan (反例)</td>
+        <td class="num cam win">0.8810</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru">0.8763</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta n">−0.005</td></tr>
 
       <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-SNR</td></tr>
       <tr><td>0.2 — 最乾淨</td>
-        <td class="num gru">0.9755</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9851</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.010</td></tr>
+        <td class="num cam">0.9297</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9755</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.046</td></tr>
       <tr><td>0.4</td>
-        <td class="num gru">0.9527</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9630</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.010</td></tr>
+        <td class="num cam">0.8921</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9527</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.061</td></tr>
       <tr><td>0.6</td>
-        <td class="num gru">0.9252</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9431</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.018</td></tr>
+        <td class="num cam">0.8481</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.9252</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.077</td></tr>
       <tr><td>0.8</td>
-        <td class="num gru">0.8882</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.9116</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.023</td></tr>
+        <td class="num cam">0.8143</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.8882</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.074</td></tr>
       <tr><td>1.0 — 最吵</td>
-        <td class="num gru">0.8618</td><td class="num gru">—</td><td class="num gru">—</td>
-        <td class="num ens">0.8771</td><td class="num ens">—</td><td class="num ens">—</td>
-        <td class="delta p">+0.015</td></tr>
+        <td class="num cam">0.7818</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="num gru win">0.8618</td><td class="num dim">—</td><td class="num dim">—</td>
+        <td class="delta p">+0.080</td></tr>
     </tbody>
   </table>
 </section>
 
 <section>
-  <h2>Deployment — 兩個方案怎麼選</h2>
-  <div class="deploy">
+  <h2>各模型怎麼選</h2>
+  <div class="modelcards">
     <div class="card">
-      <div class="top"><h4>GRU alone</h4><span class="price">0.74 MB · 189K params</span></div>
-      <div class="perf">F1 0.9235 · TAR 0.926 · FAR 0.080</div>
-      <p><b>選它如果</b>：手機 / 邊緣裝置、模型大小是首要、不想跑 CAM++（28 MB）。已過三項目標。</p>
-      <p style="margin-top:6px;color:var(--muted)"><b>注意</b>：必須用 <code style="color:var(--purple);background:#1f242c;padding:1px 5px;border-radius:3px">p[1]−rest</code> 連續分數 + 學習閾值，不要用論文預設的二元規則（後者只有 F1=0.84）。</p>
+      <div class="top"><h4>CAM++ (A8)</h4><span class="price">28 MB · 6.9M</span></div>
+      <div class="perf">F1 0.858 · TAR 0.88 · FAR 0.170</div>
+      <p><b>選它如果</b>：使用者要 plug-and-play（只需 192-d enrollment centroid 768B 即可，無需訓練），場景是任意新使用者。</p>
+      <p style="margin-top:6px;color:var(--muted)"><b>限制</b>：FAR=0.17 未達 0.20 邊緣達標但較高；spk7 上 FAR=0.20 偏高。</p>
     </div>
-    <div class="card ens">
-      <div class="top"><h4>GRU × CAM++ Ensemble</h4><span class="price">29 MB total</span></div>
-      <div class="perf">F1 0.9386 · TAR 0.932 · FAR 0.054</div>
-      <p><b>選它如果</b>：要最低 FAR（誤報少 32%）、有後端推理算力、特別在 fan noise / SNR=1 等惡劣條件需要邊際提升。</p>
-      <p style="margin-top:6px;color:var(--muted)"><b>多消耗</b>：+28 MB CAM++、+150 KB cohort、+CAM++ 推理 30ms/0.5s。</p>
+    <div class="card gru">
+      <div class="top"><h4>GRU (SD)</h4><span class="price">0.74 MB · 189K</span></div>
+      <div class="perf">F1 0.924 · TAR 0.93 · FAR 0.080</div>
+      <p><b>選它如果</b>：固定使用者、手機 / 邊緣裝置、模型大小是首要。三項目標 (F1≥0.85 / TAR≥0.90 / FAR≤0.20) 全達。</p>
+      <p style="margin-top:6px;color:var(--muted)"><b>限制</b>：每個新使用者必須重新訓練一顆 .pth；fan noise 上 F1=0.876 是相對弱項。</p>
     </div>
+  </div>
+</section>
+
+<section>
+  <h2>附錄 — 把兩者合成會怎樣 <small>(ensemble 上界參考)</small></h2>
+  <div class="bonus">
+    <strong>CAM++ × GRU 4-vec Ensemble</strong>：
+    combo = 0.5·z(CAM_cos) + 0.5·z(CAM_discr) + 2.0·z(GRU) · thr=0.05<br>
+    結果：<b>F1 = 0.9386</b>（比 GRU alone 再 +0.015）、<b>TAR = 0.932</b>、<b>FAR = 0.054</b>（比 GRU 再 −32%）<br>
+    重點：F1 邊際提升小，但 FAR 大幅下降；fan noise 從 GRU 0.876 → ENS 0.910（+0.033，最大贏家）。
+    <br><br>
+    <b>Ensemble 的價值不在 F1，而在「補位 fan noise + 削 FAR」</b>。如果應用場景容忍 FAR=0.08，純 GRU 已足夠且省 96% 算力 / 模型大小。
   </div>
 </section>
 
@@ -371,32 +417,33 @@ footer a{color:var(--accent);text-decoration:none}
 </footer>
 
 <script>
-const C_GRU = '#bc8cff';
-const C_ENS = '#3fb950';
+const C_CAM = '#fb923c';
+const C_GRU = '#22d3ee';
 const GRID = '#1e2235';
 const TICK = '#8b949e';
 const TXT  = '#e6edf3';
 
 const noiseLabels = ['no_noise','crowd','cafeteria','classroom','fan'];
+const noiseCAM = [0.9625,0.8577,0.8624,0.8106,0.8810];
 const noiseGRU = [0.9830,0.9535,0.9262,0.9272,0.8763];
-const noiseENS = [0.9893,0.9607,0.9447,0.9292,0.9096];
 
 const snrLabels = ['0.2','0.4','0.6','0.8','1.0'];
+const snrCAM = [0.9297,0.8921,0.8481,0.8143,0.7818];
 const snrGRU = [0.9755,0.9527,0.9252,0.8882,0.8618];
-const snrENS = [0.9851,0.9630,0.9431,0.9116,0.8771];
 
 const spkLabels = ['spk4 F1','spk4 TAR','spk4 FAR','spk7 F1','spk7 TAR','spk7 FAR'];
+const spkCAM = [0.8867,0.896,0.125,0.8414,0.869,0.197];
 const spkGRU = [0.9518,0.957,0.054,0.9062,0.907,0.095];
-const spkENS = [0.9635,0.962,0.034,0.9233,0.914,0.066];
 
-const gainLabels = ['no_noise','crowd','cafeteria','classroom','fan','SNR 0.2','SNR 0.4','SNR 0.6','SNR 0.8','SNR 1.0','spk4','spk7'];
-const gainVals = [0.006,0.007,0.019,0.002,0.033,0.010,0.010,0.018,0.023,0.015,0.012,0.017];
+// Gap = GRU - CAM++ (positive = GRU wins)
+const gapLabels = ['no_noise','crowd','cafeteria','classroom','fan','SNR 0.2','SNR 0.4','SNR 0.6','SNR 0.8','SNR 1.0','spk4','spk7'];
+const gapVals = [0.020,0.096,0.064,0.117,-0.005,0.046,0.061,0.077,0.074,0.080,0.065,0.065];
 
-function commonOpts(min,max,fmt){return{
+function commonOpts(min,max){return{
   responsive:true,maintainAspectRatio:false,
   plugins:{
     legend:{labels:{color:TXT,font:{size:11},boxWidth:12}},
-    tooltip:{callbacks:{label:c=>c.dataset.label+': '+(fmt?fmt(c.parsed.y):c.parsed.y.toFixed(4))}}
+    tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.parsed.y.toFixed(4)}}
   },
   scales:{
     x:{ticks:{color:TICK,font:{size:10}},grid:{color:GRID}},
@@ -407,47 +454,47 @@ function commonOpts(min,max,fmt){return{
 new Chart(document.getElementById('noiseChart'),{
   type:'bar',
   data:{labels:noiseLabels,datasets:[
-    {label:'GRU alone',data:noiseGRU,backgroundColor:C_GRU,borderRadius:3},
-    {label:'ENS',data:noiseENS,backgroundColor:C_ENS,borderRadius:3}
+    {label:'CAM++',data:noiseCAM,backgroundColor:C_CAM,borderRadius:3},
+    {label:'GRU',data:noiseGRU,backgroundColor:C_GRU,borderRadius:3}
   ]},
-  options:commonOpts(0.85,1.0)
+  options:commonOpts(0.75,1.0)
 });
 
 new Chart(document.getElementById('snrChart'),{
   type:'line',
   data:{labels:snrLabels,datasets:[
-    {label:'GRU alone',data:snrGRU,borderColor:C_GRU,backgroundColor:C_GRU+'33',
-     pointBackgroundColor:C_GRU,pointRadius:4,borderWidth:2,tension:0.2,fill:false},
-    {label:'ENS',data:snrENS,borderColor:C_ENS,backgroundColor:C_ENS+'33',
-     pointBackgroundColor:C_ENS,pointRadius:4,borderWidth:2,tension:0.2,fill:false}
+    {label:'CAM++',data:snrCAM,borderColor:C_CAM,backgroundColor:C_CAM+'33',
+     pointBackgroundColor:C_CAM,pointRadius:4,borderWidth:2,tension:0.2,fill:false},
+    {label:'GRU',data:snrGRU,borderColor:C_GRU,backgroundColor:C_GRU+'33',
+     pointBackgroundColor:C_GRU,pointRadius:4,borderWidth:2,tension:0.2,fill:false}
   ]},
-  options:commonOpts(0.85,1.0)
+  options:commonOpts(0.75,1.0)
 });
 
 new Chart(document.getElementById('spkChart'),{
   type:'bar',
   data:{labels:spkLabels,datasets:[
-    {label:'GRU alone',data:spkGRU,backgroundColor:C_GRU,borderRadius:3},
-    {label:'ENS',data:spkENS,backgroundColor:C_ENS,borderRadius:3}
+    {label:'CAM++',data:spkCAM,backgroundColor:C_CAM,borderRadius:3},
+    {label:'GRU',data:spkGRU,backgroundColor:C_GRU,borderRadius:3}
   ]},
   options:commonOpts(0,1)
 });
 
-new Chart(document.getElementById('gainChart'),{
+new Chart(document.getElementById('gapChart'),{
   type:'bar',
-  data:{labels:gainLabels,datasets:[
-    {label:'F1 增益 (ENS − GRU)',data:gainVals,
-     backgroundColor:gainVals.map(v=>v>=0.02?C_ENS:v>=0.01?'#7cc46d':'#456850'),
+  data:{labels:gapLabels,datasets:[
+    {label:'F1 差距 (GRU − CAM++)',data:gapVals,
+     backgroundColor:gapVals.map(v=>v>=0 ? C_GRU : C_CAM),
      borderRadius:3}
   ]},
   options:{
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{labels:{color:TXT,font:{size:11}}},
-             tooltip:{callbacks:{label:c=>'+'+c.parsed.y.toFixed(3)}}},
+             tooltip:{callbacks:{label:c=>(c.parsed.y>=0?'+':'')+c.parsed.y.toFixed(3)}}},
     scales:{x:{ticks:{color:TICK,font:{size:10},maxRotation:45,minRotation:35},grid:{color:GRID}},
-            y:{min:0,max:0.04,ticks:{color:TICK,font:{size:10},
-                callback:v=>'+'+v.toFixed(3)},grid:{color:GRID},
-                title:{display:true,text:'F1 Δ',color:TICK,font:{size:11}}}}
+            y:{min:-0.02,max:0.13,ticks:{color:TICK,font:{size:10},
+                callback:v=>(v>=0?'+':'')+v.toFixed(3)},grid:{color:GRID},
+                title:{display:true,text:'GRU − CAM++ (F1)',color:TICK,font:{size:11}}}}
   }
 });
 </script>
