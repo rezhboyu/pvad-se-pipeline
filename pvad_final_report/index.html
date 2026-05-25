@@ -3,84 +3,97 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PVAD 最終報告 — SD × A8 Ensemble F1=0.9386</title>
+<title>PVAD 最終報告 — GRU alone vs GRU × CAM++ Ensemble</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{--bg:#0d1117;--card:#161b22;--card2:#1a1f28;--border:#21262d;
       --accent:#388bfd;--green:#3fb950;--yellow:#d29922;--red:#f85149;
-      --cyan:#22d3ee;--purple:#bc8cff;--text:#e6edf3;--muted:#7d8590}
+      --cyan:#22d3ee;--purple:#bc8cff;--text:#e6edf3;--muted:#7d8590;
+      --gru:#bc8cff;--ens:#3fb950}
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:14px/1.6 'Segoe UI',system-ui,sans-serif;
      max-width:1100px;margin:0 auto;padding:18px}
 
-.hero{background:linear-gradient(135deg,#1a2333,#252e3e);padding:24px 26px;
-      border-radius:14px;border:1px solid var(--border);margin-bottom:14px}
-.hero h1{font-size:1.5rem;letter-spacing:-.4px;margin-bottom:4px}
-.hero .lead{color:var(--muted);font-size:.85rem;margin-bottom:14px}
-.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
-.kpi .k{background:#0d1117cc;border:1px solid var(--border);
-        border-radius:8px;padding:10px 12px}
-.kpi .k .v{font-size:1.55rem;font-weight:800;letter-spacing:-1px;color:var(--green)}
-.kpi .k .v.b{color:var(--accent)}
-.kpi .k .l{color:var(--muted);font-size:.66rem;text-transform:uppercase;
-           letter-spacing:.6px;margin-top:2px}
-.kpi .k .s{color:var(--muted);font-size:.72rem;margin-top:2px}
+header{padding:14px 18px 16px;border-bottom:1px solid var(--border);margin-bottom:14px}
+header h1{font-size:1.2rem;letter-spacing:-.3px;font-weight:600;margin-bottom:3px}
+header .lead{color:var(--muted);font-size:.82rem}
+
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;font-size:12px}
+.legend .item{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;
+              border-radius:99px;background:var(--card2);border:1px solid var(--border)}
+.legend .item.gru{border-color:var(--gru)}
+.legend .item.ens{border-color:var(--ens)}
+.legend .swatch{display:inline-block;width:10px;height:10px;border-radius:2px}
+.legend .item.gru .swatch{background:var(--gru)}
+.legend .item.ens .swatch{background:var(--ens)}
+.legend .name{font-weight:600}
+.legend .val{color:var(--muted);font-family:'JetBrains Mono',Consolas,monospace;font-size:11px}
 
 section{background:var(--card);border:1px solid var(--border);border-radius:10px;
-        padding:16px 18px;margin-bottom:12px}
-section h2{font-size:1rem;color:var(--accent);margin-bottom:10px;font-weight:600;
-           display:flex;align-items:center;gap:8px}
-section h2 small{color:var(--muted);font-size:.75rem;font-weight:500}
+        padding:14px 16px;margin-bottom:12px}
+section > h2{font-size:.95rem;color:var(--accent);margin-bottom:10px;font-weight:600;
+             display:flex;align-items:center;gap:8px}
+section > h2 small{color:var(--muted);font-size:.72rem;font-weight:500}
 
 table{width:100%;border-collapse:collapse;font-size:12.5px}
-th{color:var(--muted);text-align:left;padding:7px 9px;border-bottom:1px solid var(--border);
-   font-size:.68rem;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
+th{color:var(--muted);text-align:left;padding:6px 9px;border-bottom:1px solid var(--border);
+   font-size:.65rem;text-transform:uppercase;letter-spacing:.5px;font-weight:500}
 th.num,td.num{text-align:right}
-th.grp{border-bottom:1px solid var(--border);color:var(--cyan);font-weight:600;
-       text-transform:none;letter-spacing:0;font-size:.72rem;padding-bottom:3px}
-td{padding:6px 9px;border-bottom:1px solid #1e2133}
-tr.meh td{color:var(--muted)}
+td{padding:5px 9px;border-bottom:1px solid #1e2133}
 .num{font-family:'JetBrains Mono',Consolas,monospace}
-.num.g{color:var(--green)}.num.y{color:var(--yellow)}.num.r{color:var(--red)}
+.num.gru{color:var(--gru)}
+.num.ens{color:var(--ens);font-weight:600}
 .num.dim{color:var(--muted)}
-.win{background:rgba(63,185,80,.13);font-weight:600;color:var(--green)}
-.delta{font-size:11px;color:var(--muted);font-family:monospace}
+.delta{font-family:monospace;font-size:11px}
 .delta.p{color:var(--green)}
 .delta.n{color:var(--red)}
+.delta.z{color:var(--muted)}
 
-.config-key{display:inline-flex;gap:8px;font-size:11px;color:var(--muted);
-            margin-left:auto;font-weight:500}
-.config-key span{display:inline-flex;align-items:center;gap:3px}
-.config-key i{display:inline-block;width:10px;height:10px;border-radius:2px}
-.config-key .ka{background:#444c56}
-.config-key .ks{background:#bc8cff}
-.config-key .ke{background:#3fb950}
+.headline{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px;align-items:center;
+          padding:10px 14px;background:var(--card2);border-radius:8px;margin-bottom:10px;
+          border:1px solid var(--border)}
+.headline .hcell{display:flex;flex-direction:column;gap:2px}
+.headline .hcell .hlabel{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.headline .hcell .hval{font-size:1.4rem;font-weight:700;font-family:'JetBrains Mono',Consolas,monospace;letter-spacing:-.5px}
+.headline .hcell.gru .hval{color:var(--gru)}
+.headline .hcell.ens .hval{color:var(--ens)}
+.headline .hcell .sub{font-size:11px;color:var(--muted);font-family:monospace}
+.headline .arrow{text-align:center;font-size:1.3rem;color:var(--muted)}
+.headline .gain{text-align:center;font-family:'JetBrains Mono',Consolas,monospace;
+                color:var(--green);font-size:.95rem;font-weight:700}
+.headline .gain .label{display:block;font-size:9.5px;color:var(--muted);font-weight:500;
+                       text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.chart-grid{grid-template-columns:1fr}}
+.ch{position:relative;height:240px}
+.ch.tall{height:300px}
 
 .recipe{background:#0a0e13;border:1px solid var(--border);border-radius:8px;
-        padding:12px 14px;font-family:'JetBrains Mono',Consolas,monospace;
-        font-size:12px;line-height:1.7;color:#c0c8d4;white-space:pre;overflow-x:auto}
+        padding:11px 13px;font-family:'JetBrains Mono',Consolas,monospace;
+        font-size:11.5px;line-height:1.7;color:#c0c8d4;white-space:pre;overflow-x:auto}
 .recipe .c{color:var(--muted)}
 .recipe .k{color:var(--purple)}
 .recipe .n{color:var(--yellow)}
 .recipe .v{color:var(--green)}
 
-.deploy{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}
+.deploy{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:680px){.deploy{grid-template-columns:1fr}}
 .deploy .card{background:var(--card2);border:1px solid var(--border);
-              border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px}
-.deploy .card.best{border-left-color:var(--green)}
-.deploy .card .label{color:var(--muted);font-size:.7rem;text-transform:uppercase;
-                     letter-spacing:.4px;margin-bottom:4px}
-.deploy .card h4{font-size:.92rem;margin-bottom:4px;color:var(--accent)}
-.deploy .card.best h4{color:var(--green)}
+              border-radius:8px;padding:12px 14px;border-left:3px solid var(--gru)}
+.deploy .card.ens{border-left-color:var(--ens)}
+.deploy .card .top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.deploy .card h4{font-size:.95rem;font-weight:600;color:var(--gru)}
+.deploy .card.ens h4{color:var(--ens)}
+.deploy .card .price{font-family:monospace;font-size:.78rem;color:var(--muted)}
 .deploy .card .perf{font-family:'JetBrains Mono',Consolas,monospace;
-                    color:var(--green);font-size:.78rem;margin:5px 0}
-.deploy .card p{font-size:.8rem;color:#c0c8d4;line-height:1.5}
+                    color:var(--text);font-size:.85rem;margin:6px 0 4px;
+                    background:rgba(255,255,255,0.04);padding:5px 8px;border-radius:5px}
+.deploy .card p{font-size:.78rem;color:#c0c8d4;line-height:1.5}
 
 footer{color:var(--muted);font-size:11px;text-align:center;padding:14px 0 4px}
 footer a{color:var(--accent);text-decoration:none}
-.tag{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;
-     border-radius:99px;background:#1a3a2a;color:var(--green);margin-left:6px}
-.tag.y{background:#3a2a1e;color:var(--yellow)}
-.note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+.note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.55}
 .note code{background:#1f242c;padding:1px 5px;border-radius:3px;color:var(--purple)}
 </style>
 </head>
@@ -200,212 +213,244 @@ footer a{color:var(--accent);text-decoration:none}
 <!-- PVAD-COMMONSTYLE-END -->
 
 
-<div class="hero">
-  <h1>PVAD 最終報告 · SD × A8 4-vector Ensemble</h1>
-  <p class="lead">newval_v3 / fixed_0.5s · 210 檔 · 0.1s segment-level metric · 三模型同框架同試場對照 · 2026-05-25</p>
-  <div class="kpi">
-    <div class="k"><div class="v">0.9386</div><div class="l">F1</div><div class="s">ensemble overall</div></div>
-    <div class="k"><div class="v">0.932</div><div class="l">TAR</div><div class="s">≥ 0.90 達標</div></div>
-    <div class="k"><div class="v">0.054</div><div class="l">FAR</div><div class="s">≤ 0.20 達標</div></div>
-    <div class="k"><div class="v b">3 / 3</div><div class="l">目標達成</div><div class="s">F1 TAR FAR 全標</div></div>
-    <div class="k"><div class="v b">189K</div><div class="l">SD params</div><div class="s">CAM++ 200k</div></div>
-  </div>
+<header>
+  <h1>PVAD 最終報告 · GRU alone vs GRU × CAM++ Ensemble</h1>
+  <p class="lead">同 pipeline (per-file z-score + 閾值)、同試場 newval_v3/fixed_0.5s 210 檔、0.1s segment-level metric · 2026-05-25</p>
+</header>
+
+<div class="legend">
+  <span class="item gru"><span class="swatch"></span><span class="name">GRU alone</span><span class="val">189K params · 0.74 MB · per-target</span></span>
+  <span class="item ens"><span class="swatch"></span><span class="name">GRU × CAM++ Ensemble</span><span class="val">189K + 6.9M · per-target + cohort</span></span>
 </div>
 
 <section>
-  <h2>Recipe
-    <small>三配置同 pipeline：per-file z-score 標準化 + 單一閾值 sweep</small>
-    <span class="config-key">
-      <span><i class="ka"></i>A8 alone</span>
-      <span><i class="ks"></i>SD alone</span>
-      <span><i class="ke"></i>4-vec ENS</span>
-    </span>
-  </h2>
-  <div class="recipe"><span class="c"># Per 0.5s segment, three configs of combo:</span>
-
-<span class="k">A8_alone</span>  = zscore(cos_z + asnorm_z + discr_z)                    <span class="c"># thr = -0.15</span>
-<span class="k">SD_alone</span>  = zscore(mean over seg of (p[1] − (p[0]+p[2]+p[3])))    <span class="c"># thr = -0.05</span>
-<span class="k">ENS_4vec</span>  = <span class="v">0.5</span>·cos_z + <span class="v">0.5</span>·discr_z + <span class="v">2.0</span>·sd_z                <span class="c"># thr =  0.05</span>
-
-<span class="c"># pred = combo ≥ thr, expand to per-0.1s segments for metric</span></div>
-  <p class="note">A8/SD/ENS 三者**統一在 per-file z-score + 閾值 sweep 同 framework** 比較，不是各自原始輸出規則。SD-alone 採連續分數，不是二元規則 <code>p[1] &gt; p[0]+p[2]+p[3]</code>（後者 F1=0.84，較弱）。</p>
-</section>
-
-<section>
-  <h2>Overall · per-speaker <small>(每列粗綠 = 該指標 winner)</small></h2>
-  <table>
-    <thead>
-      <tr>
-        <th rowspan="2">指標</th>
-        <th colspan="3" class="grp" style="text-align:center;color:#9ea7b3">A8 alone</th>
-        <th colspan="3" class="grp" style="text-align:center;color:#bc8cff">SD alone</th>
-        <th colspan="3" class="grp" style="text-align:center;color:#3fb950">★ ENS 4-vec</th>
-      </tr>
-      <tr>
-        <th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th>
-        <th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th>
-        <th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>overall</td>
-        <td class="num">0.8583</td><td class="num">0.879</td><td class="num">0.170</td>
-        <td class="num">0.9235</td><td class="num">0.926</td><td class="num">0.080</td>
-        <td class="num win">0.9386</td><td class="num win">0.932</td><td class="num win">0.054</td>
-      </tr>
-      <tr>
-        <td>spk4 (User1, 男)</td>
-        <td class="num">0.8867</td><td class="num">0.896</td><td class="num">0.125</td>
-        <td class="num">0.9518</td><td class="num">0.957</td><td class="num">0.054</td>
-        <td class="num win">0.9635</td><td class="num win">0.962</td><td class="num win">0.034</td>
-      </tr>
-      <tr>
-        <td>spk7 (hsuan, 女)</td>
-        <td class="num">0.8414</td><td class="num">0.869</td><td class="num">0.197</td>
-        <td class="num">0.9062</td><td class="num">0.907</td><td class="num">0.095</td>
-        <td class="num win">0.9233</td><td class="num win">0.914</td><td class="num win">0.066</td>
-      </tr>
-    </tbody>
-  </table>
-  <p class="note">spk7（女）始終比 spk4 難。A8 alone 在 spk7 的 FAR=0.20 偏高，SD 把 FAR 砍到 0.10，ensemble 再壓到 0.07。</p>
-</section>
-
-<section>
-  <h2>Per-noise — F1 對照</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>條件</th>
-        <th class="num" style="color:#9ea7b3">A8 alone</th>
-        <th class="num" style="color:#bc8cff">SD alone</th>
-        <th class="num" style="color:#3fb950">ENS 4-vec</th>
-        <th class="num">ENS − best(alone)</th>
-        <th>備註</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>no_noise</td>
-        <td class="num">0.9625</td>
-        <td class="num">0.9830</td>
-        <td class="num win">0.9893</td>
-        <td class="delta p">+0.006</td>
-        <td>三者都極好</td>
-      </tr>
-      <tr><td>crowd</td>
-        <td class="num">0.8577</td>
-        <td class="num">0.9535</td>
-        <td class="num win">0.9607</td>
-        <td class="delta p">+0.007</td>
-        <td>SD 已逼近 ENS</td>
-      </tr>
-      <tr><td>cafeteria</td>
-        <td class="num">0.8624</td>
-        <td class="num">0.9262</td>
-        <td class="num win">0.9447</td>
-        <td class="delta p">+0.019</td>
-        <td>ENS 收益較顯著</td>
-      </tr>
-      <tr><td>classroom</td>
-        <td class="num">0.8106</td>
-        <td class="num">0.9272</td>
-        <td class="num win">0.9292</td>
-        <td class="delta p">+0.002</td>
-        <td>A8 最弱項，SD 大幅補</td>
-      </tr>
-      <tr><td>fan <span class="tag y">最難</span></td>
-        <td class="num">0.8810</td>
-        <td class="num">0.8763</td>
-        <td class="num win">0.9096</td>
-        <td class="delta p">+0.029</td>
-        <td>兩者單獨都差，ENS 收益最大</td>
-      </tr>
-    </tbody>
-  </table>
-  <p class="note">A8 的最弱項是 <b>classroom</b>（0.811），SD 的最弱項是 <b>fan</b>（0.876）— 兩個模型的弱點不重疊，正是 ensemble 大幅 lift 的原因。</p>
-</section>
-
-<section>
-  <h2>Per-SNR — F1 對照 <small>(越大越吵)</small></h2>
-  <table>
-    <thead>
-      <tr>
-        <th>SNR</th>
-        <th class="num" style="color:#9ea7b3">A8 alone</th>
-        <th class="num" style="color:#bc8cff">SD alone</th>
-        <th class="num" style="color:#3fb950">ENS 4-vec</th>
-        <th class="num">A8→SD</th>
-        <th class="num">SD→ENS</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>0.2 — 最乾淨</td>
-        <td class="num">0.9297</td><td class="num">0.9755</td><td class="num win">0.9851</td>
-        <td class="delta p">+0.046</td><td class="delta p">+0.010</td>
-      </tr>
-      <tr><td>0.4</td>
-        <td class="num">0.8921</td><td class="num">0.9527</td><td class="num win">0.9630</td>
-        <td class="delta p">+0.061</td><td class="delta p">+0.010</td>
-      </tr>
-      <tr><td>0.6</td>
-        <td class="num">0.8481</td><td class="num">0.9252</td><td class="num win">0.9431</td>
-        <td class="delta p">+0.077</td><td class="delta p">+0.018</td>
-      </tr>
-      <tr><td>0.8</td>
-        <td class="num">0.8143</td><td class="num">0.8882</td><td class="num win">0.9116</td>
-        <td class="delta p">+0.074</td><td class="delta p">+0.023</td>
-      </tr>
-      <tr><td>1.0 — 最吵</td>
-        <td class="num">0.7818</td><td class="num">0.8618</td><td class="num win y">0.8771</td>
-        <td class="delta p">+0.080</td><td class="delta p">+0.015</td>
-      </tr>
-    </tbody>
-  </table>
-  <p class="note">A8→SD 的躍升 (~+0.06) 比 SD→ENS (~+0.015) 大。也就是說「換 SD」帶來的進步比「再加 ensemble」多，但 ensemble 仍逐 SNR 提升、且把 FAR 砍掉一半。</p>
-</section>
-
-<section>
-  <h2>Deployment</h2>
-  <div class="deploy">
-    <div class="card best">
-      <div class="label">固定使用者（已訓練 SD model）</div>
-      <h4>SD × A8 Ensemble</h4>
-      <div class="perf">F1=0.939 · TAR=0.93 · FAR=0.054</div>
-      <p>CAM++ 推理 2 次/秒 + SD 連續 4ms hop。Z-score 加權合成、單一閾值。Memory ≈ 29 MB / user。spk7 與 fan noise 兩個最弱項都被補。</p>
+  <h2>Headline overall <small>(三項目標 F1≥0.85 / TAR≥0.90 / FAR≤0.20)</small></h2>
+  <div class="headline">
+    <div class="hcell gru">
+      <span class="hlabel">GRU alone</span>
+      <span class="hval">0.9235</span>
+      <span class="sub">TAR 0.926 · FAR 0.080</span>
     </div>
-    <div class="card">
-      <div class="label">新使用者（無 SD model，fallback）</div>
-      <h4>CAM++ A8 alone</h4>
-      <div class="perf">F1=0.858 · TAR=0.88 · FAR=0.17</div>
-      <p>只需 192-d enrollment centroid (768B)。無需訓練。三項目標未全達（FAR 過 0.17）。</p>
+    <div class="hcell ens">
+      <span class="hlabel">GRU × CAM++ Ensemble</span>
+      <span class="hval">0.9386</span>
+      <span class="sub">TAR 0.932 · FAR 0.054</span>
     </div>
-    <div class="card">
-      <div class="label">純 mobile（連續分數）</div>
-      <h4>SD alone</h4>
-      <div class="perf">F1=0.924 · TAR=0.93 · FAR=0.080</div>
-      <p>0.74 MB model，用 p[1]−rest 連續分數 + 學習閾值（不是原始 binary rule，那只有 0.84）。per-target 需自訓練。已過三項目標。</p>
+    <div class="gain"><span class="label">F1 Δ</span>+0.015</div>
+  </div>
+  <p class="note">兩者都跨過三項目標。<b>Ensemble 主要收益不在 F1，而在 FAR：從 0.080 → 0.054，誤報少 32%</b>，TAR 也微升 0.006。F1 邊際增益是 +0.015，給的是「最後一哩」。</p>
+</section>
+
+<section>
+  <h2>Recipe — 兩配置的計算公式</h2>
+  <div class="recipe"><span class="c"># Per 0.5s segment</span>
+
+<span class="k">GRU_alone</span> = zscore( mean<sub>4ms-frames</sub>( p[1] − (p[0] + p[2] + p[3]) ) )
+            <span class="c"># 連續分數，不是 binary rule p[1] &gt; rest (那只有 F1=0.84)</span>
+            <span class="c"># pred = GRU_alone ≥ -0.05</span>
+
+<span class="k">ENS_4vec</span>  = <span class="v">0.5</span>·z(cos_target) + <span class="v">0.5</span>·z(cos_target − max(cos_cohort)) + <span class="v">2.0</span>·z(GRU)
+            <span class="c"># pred = ENS_4vec ≥ 0.05</span>
+            <span class="c"># 4D weight sweep (5×5×5×5) 後 asnorm 權重收斂到 0，被 GRU 訊息吸收</span></div>
+</section>
+
+<section>
+  <h2>可視化 · 條件對照</h2>
+  <div class="chart-grid">
+    <div>
+      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Per-noise F1</h3>
+      <div class="ch"><canvas id="noiseChart"></canvas></div>
+    </div>
+    <div>
+      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Per-SNR F1 (越大越吵)</h3>
+      <div class="ch"><canvas id="snrChart"></canvas></div>
+    </div>
+    <div>
+      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Per-speaker F1 / TAR / FAR</h3>
+      <div class="ch tall"><canvas id="spkChart"></canvas></div>
+    </div>
+    <div>
+      <h3 style="font-size:.85rem;color:var(--cyan);margin-bottom:6px">Ensemble 收益分布 (F1 Δ)</h3>
+      <div class="ch tall"><canvas id="gainChart"></canvas></div>
     </div>
   </div>
+  <p class="note">右下圖：每個條件下 ENS 比 GRU alone 多多少 F1。<b>fan 是最大贏家 (+0.033)</b>，其次 cafeteria 與 SNR=0.8。乾淨/低 SNR 條件 GRU 已逼近上限，ensemble 邊際收益小。</p>
 </section>
 
 <section>
-  <h2>剩餘空間</h2>
+  <h2>數據表 · per-condition 明細</h2>
   <table>
-    <thead><tr><th>項目</th><th class="num">A8</th><th class="num">SD</th><th class="num">ENS</th><th class="num">可能再增</th><th>方向</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Condition</th>
+        <th class="num">GRU F1</th><th class="num">GRU TAR</th><th class="num">GRU FAR</th>
+        <th class="num">ENS F1</th><th class="num">ENS TAR</th><th class="num">ENS FAR</th>
+        <th class="num">ΔF1</th>
+      </tr>
+    </thead>
     <tbody>
-      <tr><td>fan noise</td><td class="num">0.881</td><td class="num">0.876</td><td class="num">0.910</td><td class="num">+0.04</td><td>SE 前端（DTLN / GTCRN）</td></tr>
-      <tr><td>SNR=1.0 最吵</td><td class="num">0.782</td><td class="num">0.862</td><td class="num">0.877</td><td class="num">+0.05</td><td>SE 前端（同上）</td></tr>
-      <tr><td>spk7（女）</td><td class="num">0.841</td><td class="num">0.906</td><td class="num">0.923</td><td class="num">+0.02</td><td>spk7 enrollment 補（3→5）+ 重訓 SD spk7</td></tr>
-      <tr><td>新使用者</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td>per-target SD 訓練流程標準化</td></tr>
+      <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-speaker</td></tr>
+      <tr><td>spk4 (User1, 男)</td>
+        <td class="num gru">0.9518</td><td class="num gru">0.957</td><td class="num gru">0.054</td>
+        <td class="num ens">0.9635</td><td class="num ens">0.962</td><td class="num ens">0.034</td>
+        <td class="delta p">+0.012</td></tr>
+      <tr><td>spk7 (hsuan, 女)</td>
+        <td class="num gru">0.9062</td><td class="num gru">0.907</td><td class="num gru">0.095</td>
+        <td class="num ens">0.9233</td><td class="num ens">0.914</td><td class="num ens">0.066</td>
+        <td class="delta p">+0.017</td></tr>
+
+      <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-noise</td></tr>
+      <tr><td>no_noise</td>
+        <td class="num gru">0.9830</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9893</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.006</td></tr>
+      <tr><td>crowd</td>
+        <td class="num gru">0.9535</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9607</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.007</td></tr>
+      <tr><td>cafeteria</td>
+        <td class="num gru">0.9262</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9447</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.019</td></tr>
+      <tr><td>classroom</td>
+        <td class="num gru">0.9272</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9292</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.002</td></tr>
+      <tr><td>fan (最難)</td>
+        <td class="num gru">0.8763</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9096</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.033</td></tr>
+
+      <tr><td colspan="8" style="background:#1a2333;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:4px 9px">Per-SNR</td></tr>
+      <tr><td>0.2 — 最乾淨</td>
+        <td class="num gru">0.9755</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9851</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.010</td></tr>
+      <tr><td>0.4</td>
+        <td class="num gru">0.9527</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9630</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.010</td></tr>
+      <tr><td>0.6</td>
+        <td class="num gru">0.9252</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9431</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.018</td></tr>
+      <tr><td>0.8</td>
+        <td class="num gru">0.8882</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.9116</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.023</td></tr>
+      <tr><td>1.0 — 最吵</td>
+        <td class="num gru">0.8618</td><td class="num gru">—</td><td class="num gru">—</td>
+        <td class="num ens">0.8771</td><td class="num ens">—</td><td class="num ens">—</td>
+        <td class="delta p">+0.015</td></tr>
     </tbody>
   </table>
+</section>
+
+<section>
+  <h2>Deployment — 兩個方案怎麼選</h2>
+  <div class="deploy">
+    <div class="card">
+      <div class="top"><h4>GRU alone</h4><span class="price">0.74 MB · 189K params</span></div>
+      <div class="perf">F1 0.9235 · TAR 0.926 · FAR 0.080</div>
+      <p><b>選它如果</b>：手機 / 邊緣裝置、模型大小是首要、不想跑 CAM++（28 MB）。已過三項目標。</p>
+      <p style="margin-top:6px;color:var(--muted)"><b>注意</b>：必須用 <code style="color:var(--purple);background:#1f242c;padding:1px 5px;border-radius:3px">p[1]−rest</code> 連續分數 + 學習閾值，不要用論文預設的二元規則（後者只有 F1=0.84）。</p>
+    </div>
+    <div class="card ens">
+      <div class="top"><h4>GRU × CAM++ Ensemble</h4><span class="price">29 MB total</span></div>
+      <div class="perf">F1 0.9386 · TAR 0.932 · FAR 0.054</div>
+      <p><b>選它如果</b>：要最低 FAR（誤報少 32%）、有後端推理算力、特別在 fan noise / SNR=1 等惡劣條件需要邊際提升。</p>
+      <p style="margin-top:6px;color:var(--muted)"><b>多消耗</b>：+28 MB CAM++、+150 KB cohort、+CAM++ 推理 30ms/0.5s。</p>
+    </div>
+  </div>
 </section>
 
 <footer>
   資料來源：<a href="https://github.com/rezhboyu/pvad-se-pipeline/tree/master/0511">0511/eval_sd_a8_ensemble.py</a> ·
   cache <code>0520/results/ensemble_cache_base_win0.1.npz</code> ·
-  side-by-side <code>0520/results/side_by_side_breakdown.json</code>
+  <code>0520/results/side_by_side_breakdown.json</code>
 </footer>
+
+<script>
+const C_GRU = '#bc8cff';
+const C_ENS = '#3fb950';
+const GRID = '#1e2235';
+const TICK = '#8b949e';
+const TXT  = '#e6edf3';
+
+const noiseLabels = ['no_noise','crowd','cafeteria','classroom','fan'];
+const noiseGRU = [0.9830,0.9535,0.9262,0.9272,0.8763];
+const noiseENS = [0.9893,0.9607,0.9447,0.9292,0.9096];
+
+const snrLabels = ['0.2','0.4','0.6','0.8','1.0'];
+const snrGRU = [0.9755,0.9527,0.9252,0.8882,0.8618];
+const snrENS = [0.9851,0.9630,0.9431,0.9116,0.8771];
+
+const spkLabels = ['spk4 F1','spk4 TAR','spk4 FAR','spk7 F1','spk7 TAR','spk7 FAR'];
+const spkGRU = [0.9518,0.957,0.054,0.9062,0.907,0.095];
+const spkENS = [0.9635,0.962,0.034,0.9233,0.914,0.066];
+
+const gainLabels = ['no_noise','crowd','cafeteria','classroom','fan','SNR 0.2','SNR 0.4','SNR 0.6','SNR 0.8','SNR 1.0','spk4','spk7'];
+const gainVals = [0.006,0.007,0.019,0.002,0.033,0.010,0.010,0.018,0.023,0.015,0.012,0.017];
+
+function commonOpts(min,max,fmt){return{
+  responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{labels:{color:TXT,font:{size:11},boxWidth:12}},
+    tooltip:{callbacks:{label:c=>c.dataset.label+': '+(fmt?fmt(c.parsed.y):c.parsed.y.toFixed(4))}}
+  },
+  scales:{
+    x:{ticks:{color:TICK,font:{size:10}},grid:{color:GRID}},
+    y:{min:min,max:max,ticks:{color:TICK,font:{size:10}},grid:{color:GRID}}
+  }
+};}
+
+new Chart(document.getElementById('noiseChart'),{
+  type:'bar',
+  data:{labels:noiseLabels,datasets:[
+    {label:'GRU alone',data:noiseGRU,backgroundColor:C_GRU,borderRadius:3},
+    {label:'ENS',data:noiseENS,backgroundColor:C_ENS,borderRadius:3}
+  ]},
+  options:commonOpts(0.85,1.0)
+});
+
+new Chart(document.getElementById('snrChart'),{
+  type:'line',
+  data:{labels:snrLabels,datasets:[
+    {label:'GRU alone',data:snrGRU,borderColor:C_GRU,backgroundColor:C_GRU+'33',
+     pointBackgroundColor:C_GRU,pointRadius:4,borderWidth:2,tension:0.2,fill:false},
+    {label:'ENS',data:snrENS,borderColor:C_ENS,backgroundColor:C_ENS+'33',
+     pointBackgroundColor:C_ENS,pointRadius:4,borderWidth:2,tension:0.2,fill:false}
+  ]},
+  options:commonOpts(0.85,1.0)
+});
+
+new Chart(document.getElementById('spkChart'),{
+  type:'bar',
+  data:{labels:spkLabels,datasets:[
+    {label:'GRU alone',data:spkGRU,backgroundColor:C_GRU,borderRadius:3},
+    {label:'ENS',data:spkENS,backgroundColor:C_ENS,borderRadius:3}
+  ]},
+  options:commonOpts(0,1)
+});
+
+new Chart(document.getElementById('gainChart'),{
+  type:'bar',
+  data:{labels:gainLabels,datasets:[
+    {label:'F1 增益 (ENS − GRU)',data:gainVals,
+     backgroundColor:gainVals.map(v=>v>=0.02?C_ENS:v>=0.01?'#7cc46d':'#456850'),
+     borderRadius:3}
+  ]},
+  options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{labels:{color:TXT,font:{size:11}}},
+             tooltip:{callbacks:{label:c=>'+'+c.parsed.y.toFixed(3)}}},
+    scales:{x:{ticks:{color:TICK,font:{size:10},maxRotation:45,minRotation:35},grid:{color:GRID}},
+            y:{min:0,max:0.04,ticks:{color:TICK,font:{size:10},
+                callback:v=>'+'+v.toFixed(3)},grid:{color:GRID},
+                title:{display:true,text:'F1 Δ',color:TICK,font:{size:11}}}}
+  }
+});
+</script>
 
 </body>
 </html>
