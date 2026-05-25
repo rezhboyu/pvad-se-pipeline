@@ -22,8 +22,8 @@ audio{width:100%;height:36px}
 .info-card .val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
 .timeline-wrap{position:relative;width:100%;overflow-x:auto}
 svg{display:block;background:#0a0e13;border-radius:6px}
-.track-label{font-size:10.5px;fill:var(--muted)}
-.track-label.w{font-weight:700;fill:#e6edf3}
+.track-label{font-size:11.5px;fill:#e6edf3;font-weight:600;paint-order:stroke;stroke:#0a0e13;stroke-width:3px;stroke-linejoin:round;stroke-opacity:0.9}
+.track-label.w{fill:#fff;font-weight:800}
 .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--muted)}
 .legend span{display:flex;align-items:center;gap:5px}
 .legend i{width:14px;height:9px;display:inline-block;border-radius:2px}
@@ -83,78 +83,6 @@ svg{display:block;background:#0a0e13;border-radius:6px}
   <span class="current-label">當前 ·<b>疊加可視化</b></span>
 </nav>
 <!-- PVAD-TOPNAV-END -->
-<!-- PVAD-COMMONSTYLE-START -->
-<style>
-/* Lightweight beautification layer — uses :where() for zero specificity so
-   it never overrides existing styles, only fills in missing polish. */
-
-/* Smoother transitions everywhere */
-:where(a, button, summary, .card, .deploy-card, .verdict-card,
-       .k, .kpi-row > *, [class*="-card"]) {
-  transition: background-color .15s ease, border-color .15s ease,
-              box-shadow .15s ease, transform .15s ease, color .15s ease;
-}
-
-/* Link hover brightness */
-:where(body) a:hover { filter: brightness(1.18); }
-
-/* Table row hover tint (subtle, picks up site theme accent) */
-:where(table) tbody tr:hover :where(td) {
-  background-color: rgba(88,166,255,.06);
-}
-
-/* Inline code styling */
-:where(p, li, td, h1, h2, h3, h4, h5, div) > :where(code) {
-  background: rgba(140,140,160,.14);
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-family: 'JetBrains Mono','Cascadia Code',Consolas,Menlo,monospace;
-  font-size: .92em;
-}
-
-/* Slimmer scrollbars (WebKit / Chromium) */
-:where(*)::-webkit-scrollbar { width: 8px; height: 8px; }
-:where(*)::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
-:where(*)::-webkit-scrollbar-thumb:hover { background: #484f58; }
-:where(*)::-webkit-scrollbar-track { background: transparent; }
-
-/* Card lift on hover */
-:where(.card, .deploy-card, .verdict-card, .kpi-row > *):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0,0,0,.35);
-}
-
-/* Keyboard focus ring */
-:where(a, button, summary, [tabindex]):focus-visible {
-  outline: 2px solid #58a6ff;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Heading polish */
-:where(h1, h2) { letter-spacing: -.01em; }
-:where(h1) { font-weight: 700; }
-
-/* Selection */
-::selection { background: #1f6feb; color: #fff; }
-
-/* Optional: improved <details> default for any non-nav details element */
-:where(details:not(.pvad-menu)) > summary { cursor: pointer; }
-
-/* Image lazy fade-in */
-:where(img) { max-width: 100%; height: auto; }
-
-/* Better blockquote (if any page uses) */
-:where(blockquote) {
-  border-left: 3px solid #388bfd;
-  padding: 8px 14px;
-  margin: 10px 0;
-  background: rgba(56,139,253,.06);
-  border-radius: 0 6px 6px 0;
-  color: #c0c8d4;
-}
-</style>
-<!-- PVAD-COMMONSTYLE-END -->
 
 
 <header>
@@ -194,20 +122,34 @@ const LABEL_COLORS = {0:'#21262d', 1:'#3fb950', 2:'#f85149', 3:'#d29922'};
 
 // Per-method color (matches the 0.1s native predictions)
 const PRED_COLORS = {
-  'FOURVEC_01s_med3':   '#3fb950',   // winner = green
-  'HYB_01s_strong_med3':'#7cc46d',   // near-tie = lighter green
-  'GRU_01s':            '#bc8cff',   // purple
-  'CAM_01s_sliding':    '#fb923c',   // orange
-  'CAM_01s_pure_cos':   '#e08a4d',   // dimmer orange
-  'A8_05s_bcast':       '#7d8590',   // gray (legacy)
+  'FOURVEC_01s_med3':   '#3fb950',
+  'HYB_01s_strong_med3':'#7cc46d',
+  'GRU_01s':            '#bc8cff',
+  'CAM_01s_sliding':    '#fb923c',
+  'CAM_01s_pure_cos':   '#e08a4d',
+  'A8_05s_bcast':       '#7d8590',
+  'CAM_01s_lookahead':  '#ffb86c',
+  'GRU_4ms_thr_any':    '#d4a4ff',
+  'GRU_4ms_thr_majority':'#a78bfa',
+  'GRU_4ms_thr_mean':   '#9d7be0',
+};
+const PRED_CSSCLASS_NEW = {
+  'CAM_01s_lookahead':  'cam',
+  'GRU_4ms_thr_any':    'gru',
+  'GRU_4ms_thr_majority':'gru',
+  'GRU_4ms_thr_mean':   'gru',
 };
 const PRED_LABELS = {
-  'FOURVEC_01s_med3':   'FOURVEC + med3',
-  'HYB_01s_strong_med3':'HYB strong + med3',
-  'GRU_01s':            'GRU alone',
-  'CAM_01s_sliding':    'CAM++ A8 sliding',
-  'CAM_01s_pure_cos':   'CAM++ pure cos',
-  'A8_05s_bcast':       'A8 legacy 0.5s bcast',
+  'FOURVEC_01s_med3':   'HYBRID (FOURVEC + med3)',
+  'HYB_01s_strong_med3':'HYBRID (2*GRU + CAM_A8 + med3)',
+  'GRU_01s':            'GRU (mean over 25 frames + z + thr)',
+  'CAM_01s_sliding':    'CAM++ (A8 sliding 0.3s centered)',
+  'CAM_01s_pure_cos':   'CAM++ (pure cos sliding 0.3s)',
+  'A8_05s_bcast':       'CAM++ (A8 legacy 0.5s broadcast)',
+  'CAM_01s_lookahead':  'CAM++ (A8 asym lookahead 0.3s past + 0.2s future)',
+  'GRU_4ms_thr_any':    'GRU (per-frame thr, any-in-block)',
+  'GRU_4ms_thr_majority':'GRU (per-frame thr, majority-in-block)',
+  'GRU_4ms_thr_mean':   'GRU (per-frame thr, mean-in-block)',
 };
 const PRED_CSSCLASS = {
   'FOURVEC_01s_med3':   'fourvec',
@@ -216,9 +158,23 @@ const PRED_CSSCLASS = {
   'CAM_01s_sliding':    'cam',
   'CAM_01s_pure_cos':   'cam',
   'A8_05s_bcast':       'legacy',
+  'CAM_01s_lookahead':  'cam',
+  'GRU_4ms_thr_any':    'gru',
+  'GRU_4ms_thr_majority':'gru',
+  'GRU_4ms_thr_mean':   'gru',
 };
-const PRED_ORDER = ['FOURVEC_01s_med3','HYB_01s_strong_med3','GRU_01s',
-                    'CAM_01s_sliding','CAM_01s_pure_cos','A8_05s_bcast'];
+const PRED_ORDER = [
+  'FOURVEC_01s_med3',
+  'HYB_01s_strong_med3',
+  'GRU_01s',
+  'GRU_4ms_thr_mean',
+  'GRU_4ms_thr_majority',
+  'GRU_4ms_thr_any',
+  'CAM_01s_sliding',
+  'CAM_01s_lookahead',
+  'CAM_01s_pure_cos',
+  'A8_05s_bcast',
+];
 
 let MANIFEST = [];
 let CURRENT = null;
@@ -262,24 +218,27 @@ async function loadFile(fid) {
 
 function drawTimeline() {
   const svg = document.getElementById('timeline');
-  const W = 1200;
+  const W = 1280;
+  const LEFT_PAD = 260;            // gutter reserved for track labels on the left
+  const PLOT_W = W - LEFT_PAD;
   const dur = CURRENT.duration_s;
-  const x = t => (t/dur)*W;
+  const x = t => LEFT_PAD + (t/dur) * PLOT_W;
 
-  // Track layout
+  // Track layout — wider label gutter + bigger row spacing for readability
   const tracks = [
-    {y: 5,   h: 50, name: 'Waveform', kind:'wave'},
-    {y: 65,  h: 30, name: 'GT label', kind:'gt'},
+    {y: 14,  h: 48, name: 'Waveform', kind:'wave'},
+    {y: 76,  h: 28, name: 'GT label', kind:'gt'},
   ];
-  // 6 prediction tracks at 0.1s grid
-  let yCursor = 110;
+  // Prediction tracks at 0.1s grid (10 configs once all eval done)
+  let yCursor = 124;
+  const ROW_H = 22, ROW_GAP = 16;
   for (const pn of PRED_ORDER) {
-    tracks.push({y: yCursor, h: 22, name: PRED_LABELS[pn], kind:'pred01', cfg: pn, isWinner: pn==='FOURVEC_01s_med3'});
-    yCursor += 28;
+    tracks.push({y: yCursor, h: ROW_H, name: PRED_LABELS[pn], kind:'pred01', cfg: pn, isWinner: pn==='FOURVEC_01s_med3'});
+    yCursor += ROW_H + ROW_GAP;
   }
   // Score curves (GRU and CAM, in same plot)
-  tracks.push({y: yCursor + 8, h: 80, name: 'Continuous scores (GRU=purple, CAM++=orange)', kind:'score'});
-  const H = yCursor + 8 + 80 + 30;
+  tracks.push({y: yCursor + 14, h: 80, name: 'Continuous scores (GRU=purple, CAM++=orange)', kind:'score'});
+  const H = yCursor + 14 + 80 + 30;
   svg.setAttribute('width', W); svg.setAttribute('height', H);
   svg.innerHTML = '';
 
@@ -314,24 +273,25 @@ function drawTimeline() {
 
   // Per-config prediction tracks at 0.1s grid
   const blockDur = CURRENT.block_dur_s_01 || 0.1;
-  const blockW = (blockDur/dur)*W;
+  const blockW = (blockDur/dur) * PLOT_W;
   for (const t of tracks.filter(t => t.kind==='pred01')) {
     const cfg = t.cfg;
     const p = CURRENT.predictions_01s ? CURRENT.predictions_01s[cfg] : null;
     if (!p) {
-      svg.innerHTML += `<rect x="0" y="${t.y}" width="${W}" height="${t.h}" fill="#15191e" stroke="#21262d" stroke-width="0.5"/>`;
-      svg.innerHTML += `<text x="${W/2}" y="${t.y+t.h/2+3}" font-size="9" fill="#7d8590" text-anchor="middle">no data</text>`;
+      svg.innerHTML += `<rect x="${LEFT_PAD}" y="${t.y}" width="${PLOT_W}" height="${t.h}" fill="#15191e" stroke="#21262d" stroke-width="0.5"/>`;
+      svg.innerHTML += `<text x="${LEFT_PAD + PLOT_W/2}" y="${t.y+t.h/2+3}" font-size="9" fill="#7d8590" text-anchor="middle">no data</text>`;
       continue;
     }
     const color = PRED_COLORS[cfg] || '#888';
     const baseAlpha = t.isWinner ? 'ee' : 'cc';
     // Background row tint
-    svg.innerHTML += `<rect x="0" y="${t.y}" width="${W}" height="${t.h}" fill="#0e1217"/>`;
+    svg.innerHTML += `<rect x="${LEFT_PAD}" y="${t.y}" width="${PLOT_W}" height="${t.h}" fill="#0e1217"/>`;
     // 0/1 blocks
     let path = '';
     for (let i=0; i<p.blocks.length; i++) {
       if (p.blocks[i] === 1) {
-        path += `M${i*blockW} ${t.y} h${blockW} v${t.h} h${-blockW} Z`;
+        const bx = LEFT_PAD + i*blockW;
+        path += `M${bx} ${t.y} h${blockW} v${t.h} h${-blockW} Z`;
       }
     }
     svg.innerHTML += `<path d="${path}" fill="${color}${baseAlpha}"/>`;
@@ -347,28 +307,26 @@ function drawTimeline() {
     let smin = Math.min(-3, ...allVals);
     let smax = Math.max(3, ...allVals);
     const scY = v => scTrack.y + scTrack.h - ((v-smin)/(smax-smin))*scTrack.h;
-    // Zero line
     const zeroY = scY(0);
-    svg.innerHTML += `<line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.6" opacity="0.55"/>`;
-    // Threshold lines for FOURVEC + GRU
+    svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.6" opacity="0.55"/>`;
     if (CURRENT.predictions_01s) {
-      const f4thr = CURRENT.predictions_01s['FOURVEC_01s_med3']?.thr;
+      const f4thr  = CURRENT.predictions_01s['FOURVEC_01s_med3']?.thr;
       const gruthr = CURRENT.predictions_01s['GRU_01s']?.thr;
       const camthr = CURRENT.predictions_01s['CAM_01s_sliding']?.thr;
       if (f4thr !== undefined && f4thr !== null) {
         const yT = scY(f4thr);
-        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['FOURVEC_01s_med3']}" stroke-dasharray="4,3" stroke-width="0.7" opacity="0.7"/>`;
+        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['FOURVEC_01s_med3']}" stroke-dasharray="4,3" stroke-width="0.7" opacity="0.7"/>`;
         svg.innerHTML += `<text x="${W-4}" y="${yT-2}" font-size="9" fill="${PRED_COLORS['FOURVEC_01s_med3']}" text-anchor="end">FOURVEC thr=${f4thr.toFixed(2)}</text>`;
       }
       if (gruthr !== undefined && gruthr !== null && Math.abs(gruthr - (f4thr ?? 99)) > 0.05) {
         const yT = scY(gruthr);
-        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['GRU_01s']}" stroke-dasharray="4,3" stroke-width="0.6" opacity="0.55"/>`;
+        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['GRU_01s']}" stroke-dasharray="4,3" stroke-width="0.6" opacity="0.55"/>`;
         svg.innerHTML += `<text x="${W-4}" y="${yT+9}" font-size="9" fill="${PRED_COLORS['GRU_01s']}" text-anchor="end">GRU thr=${gruthr.toFixed(2)}</text>`;
       }
       if (camthr !== undefined && camthr !== null) {
         const yT = scY(camthr);
-        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['CAM_01s_sliding']}" stroke-dasharray="4,3" stroke-width="0.55" opacity="0.5"/>`;
-        svg.innerHTML += `<text x="0" y="${yT-2}" font-size="9" fill="${PRED_COLORS['CAM_01s_sliding']}">CAM thr=${camthr.toFixed(2)}</text>`;
+        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['CAM_01s_sliding']}" stroke-dasharray="4,3" stroke-width="0.55" opacity="0.5"/>`;
+        svg.innerHTML += `<text x="${LEFT_PAD+4}" y="${yT-2}" font-size="9" fill="${PRED_COLORS['CAM_01s_sliding']}">CAM thr=${camthr.toFixed(2)}</text>`;
       }
     }
     const curve = (arr, color, op, w) => {
@@ -384,24 +342,28 @@ function drawTimeline() {
     if (camZ.length) curve(camZ, PRED_COLORS['CAM_01s_sliding'], 0.85, 1.0);
   }
 
-  // Track labels
+  // Track labels — anchored right inside the left gutter, vertically centered to row
   for (const t of tracks) {
-    svg.innerHTML += `<text x="3" y="${t.y - 2}" class="track-label ${t.isWinner?'w':''}">${t.name}${t.isWinner?' (winner)':''}</text>`;
+    const yMid = t.y + t.h/2 + 4;
+    svg.innerHTML += `<text x="${LEFT_PAD - 8}" y="${yMid}" class="track-label ${t.isWinner?'w':''}" text-anchor="end">${t.name}${t.isWinner?' [WIN]':''}</text>`;
   }
 
-  // Time axis ticks
+  // Time axis ticks (within plot area only)
   const tickStep = Math.ceil(dur/10);
   for (let s=0; s<=dur; s+=tickStep) {
     const px = x(s);
     svg.innerHTML += `<line x1="${px}" y1="${H-15}" x2="${px}" y2="${H-10}" stroke="#444"/>`;
     svg.innerHTML += `<text x="${px}" y="${H-2}" font-size="9" fill="#888" text-anchor="middle">${s}s</text>`;
   }
+  // Vertical divider between label gutter and plot area
+  svg.innerHTML += `<line x1="${LEFT_PAD-1}" y1="0" x2="${LEFT_PAD-1}" y2="${H-18}" stroke="#1f242c" stroke-width="1"/>`;
 
-  // Click to seek
+  // Click to seek (only within plot area)
   svg.addEventListener('click', e => {
     const rect = svg.getBoundingClientRect();
     const px = e.clientX - rect.left;
-    AUDIO.currentTime = (px/W)*dur;
+    if (px < LEFT_PAD) return;
+    AUDIO.currentTime = ((px - LEFT_PAD)/PLOT_W)*dur;
     AUDIO.play();
   });
 
