@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PVAD 預測疊加可視化</title>
+<title>PVAD 預測疊加可視化 (0.1s native)</title>
 <style>
-:root{--bg:#0d1117;--card:#161b22;--border:#21262d;--accent:#388bfd;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;--cyan:#39d0d8;--text:#e6edf3;--muted:#8b949e}
+:root{--bg:#0d1117;--card:#161b22;--border:#21262d;--accent:#388bfd;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;--cyan:#39d0d8;--orange:#fb923c;--text:#e6edf3;--muted:#8b949e}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding:14px;max-width:1300px;margin:0 auto}
 header{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
-h1{font-size:1.3rem;margin-bottom:4px}
-.lead{color:var(--muted);font-size:.85rem}
+h1{font-size:1.25rem;margin-bottom:4px}
+.lead{color:var(--muted);font-size:.82rem}
 .controls{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px}
 select{background:#0d1117;border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;width:100%}
 audio{width:100%;height:36px}
@@ -22,18 +22,23 @@ audio{width:100%;height:36px}
 .info-card .val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
 .timeline-wrap{position:relative;width:100%;overflow-x:auto}
 svg{display:block;background:#0a0e13;border-radius:6px}
-.track-label{font-size:11px;fill:var(--muted)}
-.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:11.5px;color:var(--muted)}
-.legend span{display:flex;align-items:center;gap:4px}
-.legend i{width:14px;height:10px;display:inline-block;border-radius:2px}
-.row-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
-.stat-card{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:8px;text-align:center}
-.stat-card .name{font-size:11px;color:var(--muted)}
-.stat-card .nums{font-family:monospace;font-size:11.5px;margin-top:3px}
-.stat-card .nums b{font-size:13px}
-.stat-card.match{border-color:var(--green)}
-.stat-card.miss{border-color:var(--red)}
+.track-label{font-size:10.5px;fill:var(--muted)}
+.track-label.w{font-weight:700;fill:#e6edf3}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:14px;height:9px;display:inline-block;border-radius:2px}
+.row-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:6px;margin-top:12px}
+.stat-card{background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:7px 9px;position:relative;border-left:3px solid var(--border)}
+.stat-card.fourvec{border-left-color:var(--green)}
+.stat-card.hyb{border-left-color:#7cc46d}
+.stat-card.gru{border-left-color:var(--purple)}
+.stat-card.cam{border-left-color:var(--orange)}
+.stat-card.legacy{border-left-color:var(--muted);opacity:.85}
+.stat-card .name{font-size:11px;color:var(--text);font-weight:600}
+.stat-card .nums{font-family:'JetBrains Mono',Consolas,monospace;font-size:10.5px;margin-top:3px;color:var(--muted)}
+.stat-card .nums b{font-size:12.5px;color:var(--green)}
 .cursor-line{stroke:#fff;stroke-width:1.5;opacity:0.7}
+.section-title{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 4px;font-weight:600}
 </style>
 </head>
 <body>
@@ -153,8 +158,8 @@ svg{display:block;background:#0a0e13;border-radius:6px}
 
 
 <header>
-<h1>PVAD 預測疊加可視化</h1>
-<p class="lead">每個檔案疊圖：波形 + GT 標籤 + 三種方法預測 + 餘弦曲線 + ensemble 分數。CAM++ on newval_v3/fixed_0.5s。</p>
+<h1>PVAD 預測疊加可視化 — 真 0.1s decision</h1>
+<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 6 個方法：4-vec ensemble (winner)、HYB strong、GRU alone、CAM++ sliding、CAM++ pure cos、legacy A8 0.5s broadcast。F1 為全域 210-檔 metric。</p>
 </header>
 
 <div class="controls">
@@ -167,35 +172,64 @@ svg{display:block;background:#0a0e13;border-radius:6px}
   <div class="info-grid" id="info-grid"></div>
   <audio id="audio" controls></audio>
   <div class="timeline-wrap">
-    <svg id="timeline" width="1200" height="380"></svg>
+    <svg id="timeline" width="1200" height="500"></svg>
   </div>
   <div class="legend">
-    <span><i style="background:#3fb950"></i>label 1 = target</span>
+    <span><i style="background:#3fb950"></i>GT label 1 = target</span>
     <span><i style="background:#f85149"></i>label 2 = 同性別非目標</span>
     <span><i style="background:#d29922"></i>label 3 = 異性別非目標</span>
-    <span><i style="background:#21262d"></i>label 0 = 靜音</span>
-    <span><i style="background:#388bfd;opacity:.65"></i>預測=target</span>
-    <span><i style="background:#bc8cff"></i>餘弦曲線</span>
-    <span><i style="background:#39d0d8"></i>Ensemble 分數</span>
-    <span><i style="background:#888"></i>全域 thr (灰虛)</span>
-    <span><i style="background:#fb923c"></i>該檔最佳 thr (橘虛)</span>
+    <span><i style="background:#21262d;border:1px solid #444"></i>label 0 / 預測 0</span>
+    <span><i style="background:#3fb950"></i>FOURVEC=1</span>
+    <span><i style="background:#7cc46d"></i>HYB strong=1</span>
+    <span><i style="background:#bc8cff"></i>GRU=1</span>
+    <span><i style="background:#fb923c"></i>CAM++ sliding/cos=1</span>
+    <span><i style="background:#888"></i>A8 legacy 0.5s=1</span>
   </div>
+  <div class="section-title">Per-config global F1 (newval_v3/fixed_0.5s, 210 檔)</div>
   <div class="row-stats" id="row-stats"></div>
 </div>
 
 <script>
 const LABEL_COLORS = {0:'#21262d', 1:'#3fb950', 2:'#f85149', 3:'#d29922'};
-const METHOD_COLORS = {'Baseline (F, sliding)':'#388bfd', 'A8 Ensemble (aligned)':'#bc8cff', 'P2 Force-Alternate':'#39d0d8'};
+
+// Per-method color (matches the 0.1s native predictions)
+const PRED_COLORS = {
+  'FOURVEC_01s_med3':   '#3fb950',   // winner = green
+  'HYB_01s_strong_med3':'#7cc46d',   // near-tie = lighter green
+  'GRU_01s':            '#bc8cff',   // purple
+  'CAM_01s_sliding':    '#fb923c',   // orange
+  'CAM_01s_pure_cos':   '#e08a4d',   // dimmer orange
+  'A8_05s_bcast':       '#7d8590',   // gray (legacy)
+};
+const PRED_LABELS = {
+  'FOURVEC_01s_med3':   'FOURVEC + med3',
+  'HYB_01s_strong_med3':'HYB strong + med3',
+  'GRU_01s':            'GRU alone',
+  'CAM_01s_sliding':    'CAM++ A8 sliding',
+  'CAM_01s_pure_cos':   'CAM++ pure cos',
+  'A8_05s_bcast':       'A8 legacy 0.5s bcast',
+};
+const PRED_CSSCLASS = {
+  'FOURVEC_01s_med3':   'fourvec',
+  'HYB_01s_strong_med3':'hyb',
+  'GRU_01s':            'gru',
+  'CAM_01s_sliding':    'cam',
+  'CAM_01s_pure_cos':   'cam',
+  'A8_05s_bcast':       'legacy',
+};
+const PRED_ORDER = ['FOURVEC_01s_med3','HYB_01s_strong_med3','GRU_01s',
+                    'CAM_01s_sliding','CAM_01s_pure_cos','A8_05s_bcast'];
 
 let MANIFEST = [];
 let CURRENT = null;
-let AUDIO = document.getElementById('audio');
+const AUDIO = document.getElementById('audio');
 
 async function loadManifest() {
   const r = await fetch('manifest.json');
   MANIFEST = await r.json();
   const sel = document.getElementById('file-select');
-  sel.innerHTML = MANIFEST.map((m,i) => `<option value="${m.file_id}">${i+1}. ${m.file_id.replace(/_/g,' ')} (${m.duration_s}s)</option>`).join('');
+  sel.innerHTML = MANIFEST.map((m,i) =>
+    `<option value="${m.file_id}">${i+1}. ${m.file_id.replace(/_/g,' ')} (${m.duration_s}s)</option>`).join('');
   sel.addEventListener('change', () => loadFile(sel.value));
   loadFile(MANIFEST[0].file_id);
 }
@@ -206,49 +240,48 @@ async function loadFile(fid) {
   AUDIO.src = `${fid}.wav`;
   document.getElementById('file-name').textContent = `${fid.replace(/_/g,' ')}`;
 
-  // info grid
-  const pfBest = CURRENT.per_file_best_baseline_thr;
-  const globalThr = CURRENT.predictions['Baseline (F, sliding)'].thr;
+  const blockDur = CURRENT.block_dur_s_01 || 0.1;
+  const nBlocks  = CURRENT.n_01_blocks || (CURRENT.predictions_01s
+                    ? Object.values(CURRENT.predictions_01s)[0].blocks.length
+                    : 0);
+
   const info = [
     ['File', CURRENT.source],
     ['Speaker', `spk${CURRENT.spk} (${CURRENT.spk==4?'User1':'hsuan'})`],
     ['Condition', CURRENT.condition],
     ['Duration', `${CURRENT.duration_s}s`],
+    ['Decision grid', `${blockDur*1000} ms × ${nBlocks} blocks`],
     ['GT segments', CURRENT.gt_segments.length],
-    ['P2 hypothesis', CURRENT.predictions['P2 Force-Alternate'].hypothesis],
   ];
-  if (pfBest) {
-    info.push(['Global thr', globalThr]);
-    info.push([`Oracle thr (this file)`, `${pfBest.thr.toFixed(3)} → F1=${pfBest.f1}`]);
-    const delta = (pfBest.thr - globalThr).toFixed(3);
-    info.push(['Δ thr', `${delta > 0 ? '+' : ''}${delta} (${pfBest.thr > globalThr ? '應提高' : '應降低'})`]);
-  }
   document.getElementById('info-grid').innerHTML = info.map(([k,v])=>
     `<div class="info-card"><div class="lab">${k}</div><div class="val">${v}</div></div>`).join('');
 
   drawTimeline();
-  computeStats();
+  fillStats();
 }
 
 function drawTimeline() {
   const svg = document.getElementById('timeline');
-  const W = 1200, H = 380;
-  svg.setAttribute('width', W); svg.setAttribute('height', H);
-  svg.innerHTML = '';
+  const W = 1200;
   const dur = CURRENT.duration_s;
   const x = t => (t/dur)*W;
 
-  // tracks layout
-  const TRACK_H = 32;
+  // Track layout
   const tracks = [
-    {y: 5,   h: 50, name: 'Waveform'},
-    {y: 65,  h: TRACK_H, name: 'GT label'},
-    {y: 105, h: TRACK_H, name: 'Baseline (F)'},
-    {y: 145, h: TRACK_H, name: 'A8 Ensemble'},
-    {y: 185, h: TRACK_H, name: 'P2 Alternate'},
-    {y: 230, h: 60, name: 'Cosine (sliding)'},
-    {y: 305, h: 60, name: 'Ensemble score'},
+    {y: 5,   h: 50, name: 'Waveform', kind:'wave'},
+    {y: 65,  h: 30, name: 'GT label', kind:'gt'},
   ];
+  // 6 prediction tracks at 0.1s grid
+  let yCursor = 110;
+  for (const pn of PRED_ORDER) {
+    tracks.push({y: yCursor, h: 22, name: PRED_LABELS[pn], kind:'pred01', cfg: pn, isWinner: pn==='FOURVEC_01s_med3'});
+    yCursor += 28;
+  }
+  // Score curves (GRU and CAM, in same plot)
+  tracks.push({y: yCursor + 8, h: 80, name: 'Continuous scores (GRU=purple, CAM++=orange)', kind:'score'});
+  const H = yCursor + 8 + 80 + 30;
+  svg.setAttribute('width', W); svg.setAttribute('height', H);
+  svg.innerHTML = '';
 
   // Waveform envelope
   const env = CURRENT.waveform_env;
@@ -279,77 +312,81 @@ function drawTimeline() {
     svg.innerHTML += `<rect x="${sx}" y="${gtTrack.y}" width="${w}" height="${gtTrack.h}" fill="${col}" />`;
   }
 
-  // Prediction tracks (Baseline, A8, P2)
-  const predNames = ['Baseline (F, sliding)', 'A8 Ensemble (aligned)', 'P2 Force-Alternate'];
-  predNames.forEach((pname, idx) => {
-    const t = tracks[2+idx];
-    const pred = CURRENT.predictions[pname];
-    let segs;
-    if (pred.segments && pred.segments[0] && pred.segments[0].value !== undefined) {
-      segs = pred.segments;
-    } else {
-      segs = pred.segments;  // {start, end, value}
+  // Per-config prediction tracks at 0.1s grid
+  const blockDur = CURRENT.block_dur_s_01 || 0.1;
+  const blockW = (blockDur/dur)*W;
+  for (const t of tracks.filter(t => t.kind==='pred01')) {
+    const cfg = t.cfg;
+    const p = CURRENT.predictions_01s ? CURRENT.predictions_01s[cfg] : null;
+    if (!p) {
+      svg.innerHTML += `<rect x="0" y="${t.y}" width="${W}" height="${t.h}" fill="#15191e" stroke="#21262d" stroke-width="0.5"/>`;
+      svg.innerHTML += `<text x="${W/2}" y="${t.y+t.h/2+3}" font-size="9" fill="#7d8590" text-anchor="middle">no data</text>`;
+      continue;
     }
-    for (const seg of segs) {
-      const sx = x(seg.start), w = x(seg.end) - sx;
-      const col = seg.value===1 ? METHOD_COLORS[pname]+'cc' : '#15191e';
-      svg.innerHTML += `<rect x="${sx}" y="${t.y}" width="${w}" height="${t.h}" fill="${col}" stroke="#0a0e13" stroke-width="0.5"/>`;
+    const color = PRED_COLORS[cfg] || '#888';
+    const baseAlpha = t.isWinner ? 'ee' : 'cc';
+    // Background row tint
+    svg.innerHTML += `<rect x="0" y="${t.y}" width="${W}" height="${t.h}" fill="#0e1217"/>`;
+    // 0/1 blocks
+    let path = '';
+    for (let i=0; i<p.blocks.length; i++) {
+      if (p.blocks[i] === 1) {
+        path += `M${i*blockW} ${t.y} h${blockW} v${t.h} h${-blockW} Z`;
+      }
     }
-  });
-
-  // Cosine curve (sliding, raw + smoothed)
-  const cosTrack = tracks[5];
-  const sld = CURRENT.sliding_cosine;
-  const cosMin = -0.2, cosMax = 0.6;
-  const cosY = v => cosTrack.y + cosTrack.h - ((v-cosMin)/(cosMax-cosMin))*cosTrack.h;
-  // GLOBAL threshold line (gray dashed)
-  const thrY = cosY(CURRENT.predictions['Baseline (F, sliding)'].thr);
-  svg.innerHTML += `<line x1="0" y1="${thrY}" x2="${W}" y2="${thrY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.6"/>`;
-  svg.innerHTML += `<text x="${W-4}" y="${thrY-2}" font-size="9" fill="#888" text-anchor="end">global thr=${CURRENT.predictions['Baseline (F, sliding)'].thr}</text>`;
-  // PER-FILE BEST threshold line (orange dashed) — oracle
-  if (CURRENT.per_file_best_baseline_thr) {
-    const pfBest = CURRENT.per_file_best_baseline_thr;
-    const pfThrY = cosY(pfBest.thr);
-    svg.innerHTML += `<line x1="0" y1="${pfThrY}" x2="${W}" y2="${pfThrY}" stroke="#fb923c" stroke-dasharray="4,2" stroke-width="1.0" opacity="0.85"/>`;
-    svg.innerHTML += `<text x="${W-4}" y="${pfThrY-2}" font-size="9" fill="#fb923c" text-anchor="end" font-weight="600">oracle thr=${pfBest.thr.toFixed(3)} → F1=${pfBest.f1}</text>`;
-  }
-  // smoothed
-  let pathSm = '';
-  for (let i=0; i<sld.times.length; i++) {
-    const px = x(sld.times[i]), py = cosY(Math.max(cosMin, Math.min(cosMax, sld.smoothed[i])));
-    pathSm += (i===0?'M':'L') + ` ${px} ${py} `;
-  }
-  svg.innerHTML += `<path d="${pathSm}" stroke="${METHOD_COLORS['A8 Ensemble (aligned)']}" stroke-width="1.2" fill="none"/>`;
-  // raw
-  let pathRaw = '';
-  for (let i=0; i<sld.times.length; i++) {
-    const px = x(sld.times[i]), py = cosY(Math.max(cosMin, Math.min(cosMax, sld.scores[i])));
-    pathRaw += (i===0?'M':'L') + ` ${px} ${py} `;
-  }
-  svg.innerHTML += `<path d="${pathRaw}" stroke="#bc8cff" stroke-width="0.6" fill="none" opacity="0.45"/>`;
-
-  // Ensemble score per segment
-  const ensTrack = tracks[6];
-  const ens = CURRENT.segment_ensemble.segments;
-  const ensVals = ens.map(s=>s.score);
-  const ensMin = Math.min(-2, ...ensVals), ensMax = Math.max(2, ...ensVals);
-  const ensY = v => ensTrack.y + ensTrack.h - ((v-ensMin)/(ensMax-ensMin))*ensTrack.h;
-  const zeroY = ensY(0);
-  svg.innerHTML += `<line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.5"/>`;
-  // A8 thr line
-  const a8thrY = ensY(CURRENT.predictions['A8 Ensemble (aligned)'].thr);
-  svg.innerHTML += `<line x1="0" y1="${a8thrY}" x2="${W}" y2="${a8thrY}" stroke="${METHOD_COLORS['A8 Ensemble (aligned)']}" stroke-dasharray="3,3" stroke-width="0.7" opacity="0.7"/>`;
-  for (const seg of ens) {
-    const sx = x(seg.start), w = x(seg.end) - sx;
-    const cy = ensY(seg.score);
-    const col = seg.score>=CURRENT.predictions['A8 Ensemble (aligned)'].thr ? '#39d0d8' : '#888';
-    svg.innerHTML += `<line x1="${sx+w/2}" y1="${zeroY}" x2="${sx+w/2}" y2="${cy}" stroke="${col}" stroke-width="2"/>`;
-    svg.innerHTML += `<circle cx="${sx+w/2}" cy="${cy}" r="2.5" fill="${col}"/>`;
+    svg.innerHTML += `<path d="${path}" fill="${color}${baseAlpha}"/>`;
   }
 
-  // Track labels (left side text)
+  // Continuous scores (GRU, CAM++)
+  const scTrack = tracks[tracks.length - 1];
+  const scores = CURRENT.scores_01s || {};
+  const gruZ = scores.gru_z || [];
+  const camZ = scores.cam_z || [];   // CAM++ A8 ensemble z-score (0.3s window)
+  if (gruZ.length || camZ.length) {
+    const allVals = gruZ.concat(camZ);
+    let smin = Math.min(-3, ...allVals);
+    let smax = Math.max(3, ...allVals);
+    const scY = v => scTrack.y + scTrack.h - ((v-smin)/(smax-smin))*scTrack.h;
+    // Zero line
+    const zeroY = scY(0);
+    svg.innerHTML += `<line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.6" opacity="0.55"/>`;
+    // Threshold lines for FOURVEC + GRU
+    if (CURRENT.predictions_01s) {
+      const f4thr = CURRENT.predictions_01s['FOURVEC_01s_med3']?.thr;
+      const gruthr = CURRENT.predictions_01s['GRU_01s']?.thr;
+      const camthr = CURRENT.predictions_01s['CAM_01s_sliding']?.thr;
+      if (f4thr !== undefined && f4thr !== null) {
+        const yT = scY(f4thr);
+        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['FOURVEC_01s_med3']}" stroke-dasharray="4,3" stroke-width="0.7" opacity="0.7"/>`;
+        svg.innerHTML += `<text x="${W-4}" y="${yT-2}" font-size="9" fill="${PRED_COLORS['FOURVEC_01s_med3']}" text-anchor="end">FOURVEC thr=${f4thr.toFixed(2)}</text>`;
+      }
+      if (gruthr !== undefined && gruthr !== null && Math.abs(gruthr - (f4thr ?? 99)) > 0.05) {
+        const yT = scY(gruthr);
+        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['GRU_01s']}" stroke-dasharray="4,3" stroke-width="0.6" opacity="0.55"/>`;
+        svg.innerHTML += `<text x="${W-4}" y="${yT+9}" font-size="9" fill="${PRED_COLORS['GRU_01s']}" text-anchor="end">GRU thr=${gruthr.toFixed(2)}</text>`;
+      }
+      if (camthr !== undefined && camthr !== null) {
+        const yT = scY(camthr);
+        svg.innerHTML += `<line x1="0" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['CAM_01s_sliding']}" stroke-dasharray="4,3" stroke-width="0.55" opacity="0.5"/>`;
+        svg.innerHTML += `<text x="0" y="${yT-2}" font-size="9" fill="${PRED_COLORS['CAM_01s_sliding']}">CAM thr=${camthr.toFixed(2)}</text>`;
+      }
+    }
+    const curve = (arr, color, op, w) => {
+      let pth = '';
+      for (let i=0; i<arr.length; i++) {
+        const t = (i+0.5)*blockDur;
+        const px = x(t), py = scY(Math.max(smin, Math.min(smax, arr[i])));
+        pth += (i===0?'M':'L') + ` ${px} ${py} `;
+      }
+      svg.innerHTML += `<path d="${pth}" stroke="${color}" stroke-width="${w}" fill="none" opacity="${op}"/>`;
+    };
+    if (gruZ.length) curve(gruZ, PRED_COLORS['GRU_01s'], 0.9, 1.2);
+    if (camZ.length) curve(camZ, PRED_COLORS['CAM_01s_sliding'], 0.85, 1.0);
+  }
+
+  // Track labels
   for (const t of tracks) {
-    svg.innerHTML += `<text x="3" y="${t.y - 2}" class="track-label">${t.name}</text>`;
+    svg.innerHTML += `<text x="3" y="${t.y - 2}" class="track-label ${t.isWinner?'w':''}">${t.name}${t.isWinner?' (winner)':''}</text>`;
   }
 
   // Time axis ticks
@@ -374,56 +411,27 @@ function drawTimeline() {
   cursorLine.setAttribute('x1','0'); cursorLine.setAttribute('x2','0');
   cursorLine.setAttribute('y1','0'); cursorLine.setAttribute('y2',H);
   svg.appendChild(cursorLine);
-  const updateCursor = () => {
+  AUDIO.addEventListener('timeupdate', () => {
     const px = (AUDIO.currentTime/dur)*W;
     cursorLine.setAttribute('x1', px); cursorLine.setAttribute('x2', px);
-  };
-  AUDIO.addEventListener('timeupdate', updateCursor);
+  });
 }
 
-function computeStats() {
-  // Compute per-method F1 vs GT at frame level (rough estimate)
-  // GT binary: label==1 only
-  const dur = CURRENT.duration_s;
-  const SR_DUMMY = 100;  // 10ms granularity for fast computation
-  const N = Math.floor(dur * SR_DUMMY);
-  const gt = new Uint8Array(N);
-  for (const seg of CURRENT.gt_segments) {
-    if (seg.label === 1) {
-      const s = Math.floor(seg.start*SR_DUMMY);
-      const e = Math.min(Math.floor(seg.end*SR_DUMMY), N);
-      for (let i=s; i<e; i++) gt[i] = 1;
-    }
+function fillStats() {
+  // Use the pre-computed global metrics that came with each config in predictions_01s
+  const cards = [];
+  for (const cfg of PRED_ORDER) {
+    const p = CURRENT.predictions_01s ? CURRENT.predictions_01s[cfg] : null;
+    if (!p) continue;
+    const ov = p.overall || {};
+    cards.push(
+      `<div class="stat-card ${PRED_CSSCLASS[cfg]}">
+         <div class="name">${PRED_LABELS[cfg]}</div>
+         <div class="nums"><b>F1=${(ov.f1??0).toFixed(4)}</b> TAR=${(ov.tar??0).toFixed(3)} FAR=${(ov.far??0).toFixed(3)} · thr=${(p.thr??0).toFixed(2)}</div>
+       </div>`
+    );
   }
-
-  const stats = [];
-  for (const pname of ['Baseline (F, sliding)', 'A8 Ensemble (aligned)', 'P2 Force-Alternate']) {
-    const pred = new Uint8Array(N);
-    for (const seg of CURRENT.predictions[pname].segments) {
-      if (seg.value === 1) {
-        const s = Math.floor(seg.start*SR_DUMMY);
-        const e = Math.min(Math.floor(seg.end*SR_DUMMY), N);
-        for (let i=s; i<e; i++) pred[i] = 1;
-      }
-    }
-    let tp=0,fp=0,fn=0,tn=0;
-    for (let i=0; i<N; i++) {
-      if (gt[i]===1 && pred[i]===1) tp++;
-      else if (gt[i]===0 && pred[i]===1) fp++;
-      else if (gt[i]===1 && pred[i]===0) fn++;
-      else tn++;
-    }
-    const pr = tp/(tp+fp+1e-9);
-    const rc = tp/(tp+fn+1e-9);
-    const f1 = 2*pr*rc/(pr+rc+1e-9);
-    const far = fp/(fp+tn+1e-9);
-    const cls = (f1>=0.85 && rc>=0.9 && far<=0.2) ? 'match' : (f1>=0.85 ? '' : 'miss');
-    stats.push({name: pname, f1, tar:rc, far, cls});
-  }
-  document.getElementById('row-stats').innerHTML = stats.map(s=>
-    `<div class="stat-card ${s.cls}"><div class="name">${s.name}</div>
-     <div class="nums"><b>F1=${s.f1.toFixed(3)}</b> TAR=${s.tar.toFixed(3)} FAR=${s.far.toFixed(3)}</div></div>`
-  ).join('');
+  document.getElementById('row-stats').innerHTML = cards.join('');
 }
 
 loadManifest();
