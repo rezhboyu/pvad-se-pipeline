@@ -159,7 +159,7 @@ svg{display:block;background:#0a0e13;border-radius:6px}
 
 <header>
 <h1>PVAD 預測疊加可視化 — 真 0.1s decision</h1>
-<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 9 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++-only (A8 broadcast / <b>t-test+middle ★ 新最佳 CAM++ only</b> / zero-cross / Viterbi / pure cos+med3 / A8 sliding)。F1 為全域 210-檔 metric。</p>
+<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 16 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++ 參考 (A8 broadcast / A8 sliding)、CAM++ 梯度家族 (<b>t-test ★</b> / 嚴格 t-test / mean-shift / matched-filter / CUSUM / PELT / MAD / CFAR)、CAM++ 簡單 (zero-cross / Viterbi / pure cos+med3)。F1 為全域 210-檔 metric。</p>
 </header>
 
 <div class="controls">
@@ -210,6 +210,14 @@ const PRED_COLORS = {
   'CAM_01s_pure_cos_med3':  '#e08a4d',  // same orange as CAM++ family
   // Newest winner: t-test switch + middle-block mean
   'CAM_ttest_k1.5_mid1':    '#f0b429',  // gold — best CAM++-only true 0.1s
+  // Additional gradient family (all with middle-block classifier)
+  'CAM_ttest_k2.5_mid1':    '#fbbf24',  // amber — stricter t-test
+  'CAM_meanshift_k1.5_mid1':'#fde047',  // bright yellow — mean shift
+  'CAM_matched_k2.5_mid1':  '#fb7185',  // pink — matched filter step-edge
+  'CAM_cusum_h2_mid1':      '#e879f9',  // magenta — CUSUM
+  'CAM_pelt_med_mid1':      '#a3e635',  // lime — PELT changepoint
+  'CAM_MAD_k1.5_mid1':      '#67e8f9',  // light cyan — MAD adaptive
+  'CAM_CFAR_k2.5_mid1':     '#5eead4',  // pale teal — CFAR rolling
 };
 const PRED_CSSCLASS_NEW = {
   'CAM_01s_lookahead':  'cam',
@@ -233,7 +241,15 @@ const PRED_LABELS = {
   'CAM_viterbi_cos':        'CAM++ (2-state Viterbi, min-dwell)',
   'CAM_01s_pure_cos_med3':  'CAM++ (pure cos + median3 thr)',
   // Newest winner
-  'CAM_ttest_k1.5_mid1':    'CAM++ (t-test switch + middle-mean) ★ best plug-and-play',
+  'CAM_ttest_k1.5_mid1':    'CAM++ (t-test k=1.5 + middle-mean) ★ best plug-and-play',
+  // Additional gradient family
+  'CAM_ttest_k2.5_mid1':    'CAM++ (t-test k=2.5, stricter)',
+  'CAM_meanshift_k1.5_mid1':'CAM++ (mean-shift |L-R|)',
+  'CAM_matched_k2.5_mid1':  'CAM++ (matched-filter step-edge)',
+  'CAM_cusum_h2_mid1':      'CAM++ (CUSUM h=2)',
+  'CAM_pelt_med_mid1':      'CAM++ (PELT changepoint)',
+  'CAM_MAD_k1.5_mid1':      'CAM++ (MAD adaptive gradient)',
+  'CAM_CFAR_k2.5_mid1':     'CAM++ (CFAR rolling MAD)',
 };
 const PRED_CSSCLASS = {
   'FOURVEC_01s_med3':       'fourvec',
@@ -251,19 +267,35 @@ const PRED_CSSCLASS = {
   'CAM_viterbi_cos':        'cam',
   'CAM_01s_pure_cos_med3':  'cam',
   'CAM_ttest_k1.5_mid1':    'cam',
+  'CAM_ttest_k2.5_mid1':    'cam',
+  'CAM_meanshift_k1.5_mid1':'cam',
+  'CAM_matched_k2.5_mid1':  'cam',
+  'CAM_cusum_h2_mid1':      'cam',
+  'CAM_pelt_med_mid1':      'cam',
+  'CAM_MAD_k1.5_mid1':      'cam',
+  'CAM_CFAR_k2.5_mid1':     'cam',
 };
 const PRED_ORDER = [
   // Top hybrid (uses GRU — for context only)
   'FOURVEC_01s_med3',
   'HYB_01s_strong_med3',
   'GRU_01s',
-  // CAM++-only (plug-and-play, true 0.1s)
+  // CAM++-only references
   'A8_05s_bcast',
-  'CAM_ttest_k1.5_mid1',   // newest winner
+  'CAM_01s_sliding',
+  // Gradient/changepoint family (all middle-block classified)
+  'CAM_ttest_k1.5_mid1',     // winner
+  'CAM_ttest_k2.5_mid1',
+  'CAM_meanshift_k1.5_mid1',
+  'CAM_matched_k2.5_mid1',
+  'CAM_cusum_h2_mid1',
+  'CAM_pelt_med_mid1',
+  'CAM_MAD_k1.5_mid1',
+  'CAM_CFAR_k2.5_mid1',
+  // Older simple methods (zero-cross is mathematically equivalent to thresholding)
   'CAM_zero_cross_cos',
   'CAM_viterbi_cos',
   'CAM_01s_pure_cos_med3',
-  'CAM_01s_sliding',
 ];
 
 let MANIFEST = [];
