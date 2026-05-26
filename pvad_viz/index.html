@@ -429,9 +429,11 @@ function drawTimeline() {
     tracks.push({y: yCursor, h: ROW_H, name: PRED_LABELS[pn], kind:'pred01', cfg: pn, isWinner: pn==='FOURVEC_01s_med3'});
     yCursor += ROW_H + ROW_GAP;
   }
-  // Score curves (GRU and CAM, in same plot)
-  tracks.push({y: yCursor + 14, h: 80, name: 'Continuous scores (GRU=purple, CAM++=orange)', kind:'score'});
-  const H = yCursor + 14 + 80 + 30;
+  // Score curves — separated into two stacked sub-tracks for clarity
+  const SC_H = 70, SC_GAP = 10;
+  tracks.push({y: yCursor + 14,              h: SC_H, name: 'GRU score (z)',    kind:'score', signal:'gru', color:'#bc8cff'});
+  tracks.push({y: yCursor + 14 + SC_H + SC_GAP, h: SC_H, name: 'CAM++ score (z)',  kind:'score', signal:'cam', color:'#fb923c'});
+  const H = yCursor + 14 + 2*SC_H + SC_GAP + 30;
   svg.setAttribute('width', W); svg.setAttribute('height', H);
   svg.innerHTML = '';
 
@@ -511,49 +513,52 @@ function drawTimeline() {
     svg.innerHTML += `<path d="${path}" fill="${color}${baseAlpha}"/>`;
   }
 
-  // Continuous scores (GRU, CAM++)
-  const scTrack = tracks[tracks.length - 1];
+  // Continuous scores — GRU and CAM++ in SEPARATE stacked sub-tracks
   const scores = CURRENT.scores_01s || {};
-  const gruZ = scores.gru_z || [];
-  const camZ = scores.cam_z || [];   // CAM++ A8 ensemble z-score (0.3s window)
-  if (gruZ.length || camZ.length) {
-    const allVals = gruZ.concat(camZ);
-    let smin = Math.min(-3, ...allVals);
-    let smax = Math.max(3, ...allVals);
-    const scY = v => scTrack.y + scTrack.h - ((v-smin)/(smax-smin))*scTrack.h;
+  const scoreTracks = tracks.filter(t => t.kind === 'score');
+  const SCORE_DATA = {
+    gru: {arr: scores.gru_z || [], color: PRED_COLORS['GRU_01s'],
+          thrLookups: [['GRU_01s', 'GRU thr'], ['FOURVEC_01s_med3', 'FOURVEC thr']]},
+    cam: {arr: scores.cam_z || [], color: PRED_COLORS['CAM_01s_sliding'],
+          thrLookups: [['CAM_01s_sliding', 'CAM thr'], ['CAM_ttest_k1.5_mid1', 't-test thr']]},
+  };
+  for (const stk of scoreTracks) {
+    const sd = SCORE_DATA[stk.signal];
+    if (!sd) continue;
+    const arr = sd.arr;
+    if (!arr.length) {
+      svg.innerHTML += `<rect x="${LEFT_PAD}" y="${stk.y}" width="${PLOT_W}" height="${stk.h}" fill="#0e1217"/>`;
+      svg.innerHTML += `<text x="${LEFT_PAD + PLOT_W/2}" y="${stk.y+stk.h/2+3}" font-size="9" fill="#7d8590" text-anchor="middle">no data</text>`;
+      continue;
+    }
+    // Background panel
+    svg.innerHTML += `<rect x="${LEFT_PAD}" y="${stk.y}" width="${PLOT_W}" height="${stk.h}" fill="#0a0e13" stroke="#1f242c" stroke-width="0.5"/>`;
+    const smin = Math.min(-3, ...arr);
+    const smax = Math.max(3, ...arr);
+    const scY = v => stk.y + stk.h - ((v-smin)/(smax-smin))*stk.h;
     const zeroY = scY(0);
     svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="#888" stroke-dasharray="3,3" stroke-width="0.6" opacity="0.55"/>`;
+    // Threshold reference lines for relevant configs in this sub-track
     if (CURRENT.predictions_01s) {
-      const f4thr  = CURRENT.predictions_01s['FOURVEC_01s_med3']?.thr;
-      const gruthr = CURRENT.predictions_01s['GRU_01s']?.thr;
-      const camthr = CURRENT.predictions_01s['CAM_01s_sliding']?.thr;
-      if (f4thr !== undefined && f4thr !== null) {
-        const yT = scY(f4thr);
-        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['FOURVEC_01s_med3']}" stroke-dasharray="4,3" stroke-width="0.7" opacity="0.7"/>`;
-        svg.innerHTML += `<text x="${W-4}" y="${yT-2}" font-size="9" fill="${PRED_COLORS['FOURVEC_01s_med3']}" text-anchor="end">FOURVEC thr=${f4thr.toFixed(2)}</text>`;
-      }
-      if (gruthr !== undefined && gruthr !== null && Math.abs(gruthr - (f4thr ?? 99)) > 0.05) {
-        const yT = scY(gruthr);
-        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['GRU_01s']}" stroke-dasharray="4,3" stroke-width="0.6" opacity="0.55"/>`;
-        svg.innerHTML += `<text x="${W-4}" y="${yT+9}" font-size="9" fill="${PRED_COLORS['GRU_01s']}" text-anchor="end">GRU thr=${gruthr.toFixed(2)}</text>`;
-      }
-      if (camthr !== undefined && camthr !== null) {
-        const yT = scY(camthr);
-        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${PRED_COLORS['CAM_01s_sliding']}" stroke-dasharray="4,3" stroke-width="0.55" opacity="0.5"/>`;
-        svg.innerHTML += `<text x="${LEFT_PAD+4}" y="${yT-2}" font-size="9" fill="${PRED_COLORS['CAM_01s_sliding']}">CAM thr=${camthr.toFixed(2)}</text>`;
+      let txOff = 0;
+      for (const [cfgK, lbl] of sd.thrLookups) {
+        const thr = CURRENT.predictions_01s[cfgK]?.thr;
+        if (thr === undefined || thr === null) continue;
+        const yT = scY(thr);
+        const col = PRED_COLORS[cfgK] || '#888';
+        svg.innerHTML += `<line x1="${LEFT_PAD}" y1="${yT}" x2="${W}" y2="${yT}" stroke="${col}" stroke-dasharray="4,3" stroke-width="0.7" opacity="0.7"/>`;
+        svg.innerHTML += `<text x="${W-4 - txOff}" y="${yT-2}" font-size="9" fill="${col}" text-anchor="end">${lbl}=${thr.toFixed(2)}</text>`;
+        txOff += 0;  // future: stagger
       }
     }
-    const curve = (arr, color, op, w) => {
-      let pth = '';
-      for (let i=0; i<arr.length; i++) {
-        const t = (i+0.5)*blockDur;
-        const px = x(t), py = scY(Math.max(smin, Math.min(smax, arr[i])));
-        pth += (i===0?'M':'L') + ` ${px} ${py} `;
-      }
-      svg.innerHTML += `<path d="${pth}" stroke="${color}" stroke-width="${w}" fill="none" opacity="${op}"/>`;
-    };
-    if (gruZ.length) curve(gruZ, PRED_COLORS['GRU_01s'], 0.9, 1.2);
-    if (camZ.length) curve(camZ, PRED_COLORS['CAM_01s_sliding'], 0.85, 1.0);
+    // Curve
+    let pth = '';
+    for (let i=0; i<arr.length; i++) {
+      const t = (i+0.5)*blockDur;
+      const px = x(t), py = scY(Math.max(smin, Math.min(smax, arr[i])));
+      pth += (i===0?'M':'L') + ` ${px} ${py} `;
+    }
+    svg.innerHTML += `<path d="${pth}" stroke="${sd.color}" stroke-width="1.3" fill="none" opacity="0.95"/>`;
   }
 
   // Track labels — anchored right inside the left gutter, vertically centered to row
