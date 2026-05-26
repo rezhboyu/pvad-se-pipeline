@@ -408,12 +408,14 @@ function drawTimeline() {
     const baseAlpha = t.isWinner ? 'ee' : 'cc';
     // Background row tint
     svg.innerHTML += `<rect x="${LEFT_PAD}" y="${t.y}" width="${PLOT_W}" height="${t.h}" fill="#0e1217"/>`;
-    // 0/1 blocks
+    // 0/1 blocks rendered at native 0.1s granularity — small gap between cells
+    const GAP = 1.2;                       // px between adjacent blocks
+    const cellW = Math.max(1, blockW - GAP);
     let path = '';
     for (let i=0; i<p.blocks.length; i++) {
       if (p.blocks[i] === 1) {
-        const bx = LEFT_PAD + i*blockW;
-        path += `M${bx} ${t.y} h${blockW} v${t.h} h${-blockW} Z`;
+        const bx = LEFT_PAD + i*blockW + GAP/2;
+        path += `M${bx} ${t.y+1} h${cellW} v${t.h-2} h${-cellW} Z`;
       }
     }
     svg.innerHTML += `<path d="${path}" fill="${color}${baseAlpha}"/>`;
