@@ -492,14 +492,14 @@ function drawTimeline() {
     AUDIO.play();
   });
 
-  // Cursor follows audio
+  // Cursor follows audio (only within plot area, not over labels)
   let cursorLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   cursorLine.classList.add('cursor-line');
-  cursorLine.setAttribute('x1','0'); cursorLine.setAttribute('x2','0');
-  cursorLine.setAttribute('y1','0'); cursorLine.setAttribute('y2',H);
+  cursorLine.setAttribute('x1', LEFT_PAD); cursorLine.setAttribute('x2', LEFT_PAD);
+  cursorLine.setAttribute('y1','0'); cursorLine.setAttribute('y2', H - 18);
   svg.appendChild(cursorLine);
   AUDIO.addEventListener('timeupdate', () => {
-    const px = (AUDIO.currentTime/dur)*W;
+    const px = LEFT_PAD + (AUDIO.currentTime/dur) * PLOT_W;
     cursorLine.setAttribute('x1', px); cursorLine.setAttribute('x2', px);
   });
 }
