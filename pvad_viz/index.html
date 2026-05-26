@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#0d1117;--card:#161b22;--border:#21262d;--accent:#388bfd;--green:#3fb950;--red:#f85149;--yellow:#d29922;--purple:#bc8cff;--cyan:#39d0d8;--orange:#fb923c;--text:#e6edf3;--muted:#8b949e}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding:14px;max-width:1300px;margin:0 auto}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;padding:14px;max-width:1480px;margin:0 auto}
 header{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
 h1{font-size:1.25rem;margin-bottom:4px}
 .lead{color:var(--muted);font-size:.82rem}
@@ -22,8 +22,8 @@ audio{width:100%;height:36px}
 .info-card .val{font-size:13px;font-weight:600;color:var(--text);margin-top:2px}
 .timeline-wrap{position:relative;width:100%;overflow-x:auto}
 svg{display:block;background:#0a0e13;border-radius:6px}
-.track-label{font-size:11.5px;fill:#e6edf3;font-weight:600;paint-order:stroke;stroke:#0a0e13;stroke-width:3px;stroke-linejoin:round;stroke-opacity:0.9}
-.track-label.w{fill:#fff;font-weight:800}
+.track-label{font-size:10.5px;fill:#e6edf3;font-weight:600;paint-order:stroke;stroke:#0a0e13;stroke-width:3px;stroke-linejoin:round;stroke-opacity:0.9}
+.track-label.w{fill:#fff;font-weight:800;font-size:11px}
 .legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:11px;color:var(--muted)}
 .legend span{display:flex;align-items:center;gap:5px}
 .legend i{width:14px;height:9px;display:inline-block;border-radius:2px}
@@ -340,8 +340,8 @@ async function loadFile(fid) {
 
 function drawTimeline() {
   const svg = document.getElementById('timeline');
-  const W = 1280;
-  const LEFT_PAD = 260;            // gutter reserved for track labels on the left
+  const W = 1420;
+  const LEFT_PAD = 360;            // wider gutter so long track labels fit
   const PLOT_W = W - LEFT_PAD;
   const dur = CURRENT.duration_s;
   const x = t => LEFT_PAD + (t/dur) * PLOT_W;
@@ -465,9 +465,12 @@ function drawTimeline() {
   }
 
   // Track labels — anchored right inside the left gutter, vertically centered to row
+  // Truncate display to ~46 chars (fits in 360-px gutter at 10.5px font); full name in <title> tooltip
   for (const t of tracks) {
     const yMid = t.y + t.h/2 + 4;
-    svg.innerHTML += `<text x="${LEFT_PAD - 8}" y="${yMid}" class="track-label ${t.isWinner?'w':''}" text-anchor="end">${t.name}${t.isWinner?' [WIN]':''}</text>`;
+    const full = t.name + (t.isWinner ? ' [WIN]' : '');
+    const disp = full.length > 46 ? full.slice(0, 44) + '..' : full;
+    svg.innerHTML += `<text x="${LEFT_PAD - 8}" y="${yMid}" class="track-label ${t.isWinner?'w':''}" text-anchor="end"><title>${full}</title>${disp}</text>`;
   }
 
   // Time axis ticks (within plot area only)
