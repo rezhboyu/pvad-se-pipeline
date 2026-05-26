@@ -270,6 +270,83 @@ footer a{color:var(--accent);text-decoration:none}
   </p>
 </section>
 
+<section style="border-left:3px solid var(--orange)">
+  <h2 style="color:var(--orange)">Deployment Reality Check — 真 0.1s decision, CAM++-only</h2>
+  <p class="note" style="margin-bottom:10px">
+    上方 <b>0.5s decision</b> 數字（CAM++ 0.858、GRU 0.924）有兩個結構性問題對部署不利：
+    <br>(1) <b>0.5s 廣播假設</b>：A8 一次決策廣播到 5 個 0.1s slot，假設測試集嚴格 0.5s 交替；真實對話會崩。
+    <br>(2) <b>GRU 不能 plug-and-play</b>：per-user 訓練在生產環境不可接受。
+    <br>把這兩個假設拿掉、只用 CAM++ + cohort + enrollment 在真 0.1s 決策跑 61 個 configs (含梯度/Viterbi/CUSUM/MAD/CFAR/topK 自適應門檻/消融) 後，誠實上限是：
+  </p>
+  <div class="headline" style="grid-template-columns:1fr 1fr 1fr">
+    <div class="hcell cam">
+      <span class="hlabel">A8 0.5s broadcast</span>
+      <span class="hval">0.8583</span>
+      <span class="sub">假設 0.5s 結構</span>
+    </div>
+    <div class="hcell" style="text-align:center">
+      <span class="hlabel">真 0.1s native</span>
+      <span class="hval" style="color:var(--orange)">0.7579</span>
+      <span class="sub">無結構假設, plug-and-play</span>
+    </div>
+    <div class="hcell" style="text-align:right">
+      <span class="hlabel">差距 (代價)</span>
+      <span class="hval" style="color:var(--red)">−0.100</span>
+      <span class="sub">放棄 0.5s 假設的成本</span>
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px">
+    <b>61 configs 探索意外發現</b>：梯度/Viterbi/HMM/CUSUM/MAD-CFAR-topK 自適應門檻全部
+    <b>沒有顯著贏過簡單的 median3-smoothed cos + threshold</b>。
+  </p>
+  <table style="font-size:11.5px;margin-top:8px">
+    <thead><tr><th style="text-align:left">CAM++-only 0.1s config</th><th class="num">F1</th><th class="num">TAR</th><th class="num">FAR</th><th>備註</th></tr></thead>
+    <tbody>
+      <tr><td>A8 0.5s broadcast</td><td class="num">0.8583</td><td class="num">0.879</td><td class="num">0.170</td><td style="color:var(--muted)">假設 0.5s 結構</td></tr>
+      <tr><td><b>CAM_zero_cross_cos</b></td><td class="num"><b>0.7579</b></td><td class="num">0.830</td><td class="num">0.360</td><td>sign-change of median3(cos)</td></tr>
+      <tr><td>CAM_viterbi_cos</td><td class="num">0.7575</td><td class="num">0.795</td><td class="num">0.305</td><td>2-state Viterbi min-dwell</td></tr>
+      <tr><td>CAM_01s_pure_cos_med3</td><td class="num">0.7579</td><td class="num">0.830</td><td class="num">0.360</td><td>同 zero_cross（數學等價）</td></tr>
+      <tr><td>CAM_01s_med3</td><td class="num">0.7596</td><td class="num">0.808</td><td class="num">0.319</td><td>A8 ensemble + median3</td></tr>
+      <tr><td>CAM_cusum_cos</td><td class="num">0.7377</td><td class="num">0.716</td><td class="num">0.225</td><td>Page CUSUM 雙向</td></tr>
+      <tr><td>CAM_01s_sliding (baseline)</td><td class="num">0.7453</td><td class="num">0.826</td><td class="num">0.391</td><td>CAM++ A8 0.3s 中心滑動</td></tr>
+      <tr><td>CAM_hyb_MAD_k1.5_cos</td><td class="num">0.7174</td><td class="num">0.811</td><td class="num">0.451</td><td>MAD 自適應 κ=1.5</td></tr>
+      <tr><td>CAM_hyb_MAD_k2.5_cos</td><td class="num">0.6932</td><td class="num">0.873</td><td class="num">0.646</td><td>MAD κ=2.5（baseline 退步）</td></tr>
+      <tr><td>CAM_hyb_topK_cos</td><td class="num">0.6792</td><td class="num">0.953</td><td class="num">0.854</td><td>top-K peaks NMS</td></tr>
+    </tbody>
+  </table>
+  <p class="note" style="margin-top:8px">
+    <b>關鍵反直覺</b>：zero_cross 跟 pure_cos_med3 數字完全相同 — 因為「median3 後 sign-change 切段 + segment mean ≥ τ 標 0/1」在數學上等價「median3 後直接 thresholding」。
+    使用者觀察 cos 曲線時看到的「明顯轉折」在 5-檔 clean 場景的確存在（zero_cross F1=0.868），但全 210-檔 含 spk7 + 各種噪音後降到 0.758，梯度訊號被噪音底噪壓過去。
+    <br><br>
+    <b>消融的真實啟示</b>：
+    <br>• 平滑越多越差 (raw 0.702 / med3 0.758 / med5 0.748 / EMA 0.701)
+    <br>• 梯度 span k=3 最佳 (k=1 → 0.691, k=3 → anchor, k=5 → 0.673)
+    <br>• MAD κ 越大越爛 (κ=1.0 0.722 / κ=2.5 0.693 / κ=3.5 0.676 / κ=5.0 退化到「全 0 或全 1」)
+    <br>• min segment length 加在 segment classifier 上會傷 F1（已經 enforce dwell 不必再加）
+  </p>
+  <div class="deploy" style="margin-top:10px">
+    <div class="card">
+      <div class="top"><h4 style="color:var(--orange)">建議 deployment 配置</h4></div>
+      <div class="perf"><code>median_filter_1d(cos_z, 3) ≥ −0.30</code></div>
+      <p style="font-size:.78rem;color:#c0c8d4;line-height:1.5">
+        最簡單的方法就是最好：CAM++ 0.1s sliding 算 cos → per-file z-score → median3 平滑 → 全域閾值 −0.30 → binary。F1=0.758, TAR=0.83, FAR=0.36, plug-and-play, latency 0.15s (0.3s 中心對齊)。
+      </p>
+    </div>
+    <div class="card" style="border-left-color:var(--red)">
+      <div class="top"><h4 style="color:var(--red)">不要做的事</h4></div>
+      <div class="perf bad" style="background:none">先嘗試這些都會浪費時間</div>
+      <p style="font-size:.78rem;color:#c0c8d4;line-height:1.5">
+        梯度切段 + 段平均（hybrid B 系列）、MAD/CFAR/topK 自適應門檻、CUSUM、寬視窗 (0.5/0.7/1.0s) — 本實驗證實這些在 PVAD 的 cos signal SNR 下都打不過 median3+thr。視覺上的「明顯切換」是 spk4 clean 場景的錯覺。
+      </p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:8px;font-size:10px">
+    Source: <code>0520/results/eval_01s_native.json</code> (61 configs, 210 files) ·
+    <code>0520/results/eval_01s_native_cache.npz</code> (instant re-sweep) ·
+    可視化見 <a href="../pvad_viz/" style="color:var(--accent)">pvad_viz</a>（cyan/teal 的 zero_cross + Viterbi 軌道）
+  </p>
+</section>
+
 <section>
   <h2>Recipe — 兩模型的計算規則</h2>
   <div class="recipe"><span class="c"># Per 0.5s segment, both use per-file z-score + threshold sweep</span>
