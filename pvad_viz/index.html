@@ -39,6 +39,14 @@ svg{display:block;background:#0a0e13;border-radius:6px}
 .stat-card .nums b{font-size:12.5px;color:var(--green)}
 .cursor-line{stroke:#fff;stroke-width:1.5;opacity:0.7}
 .section-title{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:14px 0 4px;font-weight:600}
+.extra-toggle{margin-top:10px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.extra-toggle summary{cursor:pointer;font-size:12px;color:var(--text);font-weight:600;user-select:none}
+.extra-toggle summary::marker{color:var(--accent)}
+.extra-toggle .opts{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px 14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.extra-toggle .opts label{display:flex;align-items:center;gap:6px;font-size:11.5px;color:#c0c8d4;cursor:pointer}
+.extra-toggle .opts input{accent-color:var(--accent);margin:0}
+.extra-toggle .opts .sw{display:inline-block;width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.extra-toggle .opts .f1tag{margin-left:auto;font-family:monospace;color:var(--muted);font-size:10.5px}
 </style>
 </head>
 <body>
@@ -159,7 +167,7 @@ svg{display:block;background:#0a0e13;border-radius:6px}
 
 <header>
 <h1>PVAD 預測疊加可視化 — 真 0.1s decision</h1>
-<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 16 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++ 參考 (A8 broadcast / A8 sliding)、CAM++ 梯度家族 (<b>t-test ★</b> / 嚴格 t-test / mean-shift / matched-filter / CUSUM / PELT / MAD / CFAR)、CAM++ 簡單 (zero-cross / Viterbi / pure cos+med3)。F1 為全域 210-檔 metric。</p>
+<p class="lead">預設只顯示 3 個類別代表：<b>FOURVEC (GRU 最好)</b>、<b>A8 0.5s broadcast (CAM++ 最好)</b>、<b>t-test (梯度家族最好, 真 0.1s plug-and-play)</b>。其他 13 個算法可在下方勾選展開比較。F1 為全域 210-檔 metric。</p>
 </header>
 
 <div class="controls">
@@ -185,6 +193,10 @@ svg{display:block;background:#0a0e13;border-radius:6px}
     <span><i style="background:#fb923c"></i>CAM++ sliding/cos=1</span>
     <span><i style="background:#888"></i>A8 legacy 0.5s=1</span>
   </div>
+  <details class="extra-toggle" id="extra-tracks">
+    <summary>顯示更多算法 (預設只顯示三個類別代表，點擊勾選其他算法)</summary>
+    <div class="opts" id="extra-opts"></div>
+  </details>
   <div class="section-title">Per-config global F1 (newval_v3/fixed_0.5s, 210 檔)</div>
   <div class="row-stats" id="row-stats"></div>
 </div>
@@ -294,16 +306,18 @@ const PRED_RENDER_MODE = {
   'CAM_CFAR_k2.5_mid1':      ['segment', 1],
 };
 
-const PRED_ORDER = [
-  // Top hybrid (uses GRU — for context only)
-  'FOURVEC_01s_med3',
+// Always-on top 3: 各類別代表
+const PRED_TOP = [
+  'FOURVEC_01s_med3',          // GRU 最好
+  'A8_05s_bcast',              // CAM++ 最好（0.5s 結構假設）
+  'CAM_ttest_k1.5_mid1',       // 梯度家族最好（真 0.1s plug-and-play）
+];
+
+// Hidden by default — user toggles via checkbox
+const PRED_EXTRA = [
   'HYB_01s_strong_med3',
   'GRU_01s',
-  // CAM++-only references
-  'A8_05s_bcast',
   'CAM_01s_sliding',
-  // Gradient/changepoint family (all middle-block classified)
-  'CAM_ttest_k1.5_mid1',     // winner
   'CAM_ttest_k2.5_mid1',
   'CAM_meanshift_k1.5_mid1',
   'CAM_matched_k2.5_mid1',
@@ -311,15 +325,47 @@ const PRED_ORDER = [
   'CAM_pelt_med_mid1',
   'CAM_MAD_k1.5_mid1',
   'CAM_CFAR_k2.5_mid1',
-  // Older simple methods (zero-cross is mathematically equivalent to thresholding)
   'CAM_zero_cross_cos',
   'CAM_viterbi_cos',
   'CAM_01s_pure_cos_med3',
 ];
 
+// Combined order for rendering (top + enabled extras, in this order)
+let PRED_ORDER = [...PRED_TOP];
+const ENABLED_EXTRAS = new Set();
+function rebuildPredOrder() {
+  PRED_ORDER = [...PRED_TOP, ...PRED_EXTRA.filter(c => ENABLED_EXTRAS.has(c))];
+}
+
 let MANIFEST = [];
 let CURRENT = null;
 const AUDIO = document.getElementById('audio');
+
+function renderExtraOpts(initialCfgMeta) {
+  // initialCfgMeta: map cfg→{f1, …} for label tagging. Optional; missing F1 → no tag.
+  const host = document.getElementById('extra-opts');
+  host.innerHTML = PRED_EXTRA.map(cfg => {
+    const color = PRED_COLORS[cfg] || '#888';
+    const label = PRED_LABELS[cfg] || cfg;
+    const f1   = initialCfgMeta?.[cfg]?.overall?.f1;
+    const f1tag = (f1 != null) ? `<span class="f1tag">F1 ${f1.toFixed(3)}</span>` : '';
+    return `<label>
+              <input type="checkbox" data-cfg="${cfg}" ${ENABLED_EXTRAS.has(cfg)?'checked':''}>
+              <span class="sw" style="background:${color}"></span>
+              <span>${label}</span>
+              ${f1tag}
+            </label>`;
+  }).join('');
+  host.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const c = cb.getAttribute('data-cfg');
+      if (cb.checked) ENABLED_EXTRAS.add(c);
+      else ENABLED_EXTRAS.delete(c);
+      rebuildPredOrder();
+      if (CURRENT) { drawTimeline(); fillStats(); }
+    });
+  });
+}
 
 async function loadManifest() {
   const r = await fetch('manifest.json');
@@ -331,11 +377,17 @@ async function loadManifest() {
   loadFile(MANIFEST[0].file_id);
 }
 
+let _extraOptsRendered = false;
 async function loadFile(fid) {
   const r = await fetch(`${fid}.json`);
   CURRENT = await r.json();
   AUDIO.src = `${fid}.wav`;
   document.getElementById('file-name').textContent = `${fid.replace(/_/g,' ')}`;
+
+  if (!_extraOptsRendered) {
+    renderExtraOpts(CURRENT.predictions_01s || {});
+    _extraOptsRendered = true;
+  }
 
   const blockDur = CURRENT.block_dur_s_01 || 0.1;
   const nBlocks  = CURRENT.n_01_blocks || (CURRENT.predictions_01s
