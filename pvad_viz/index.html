@@ -275,11 +275,23 @@ const PRED_CSSCLASS = {
   'CAM_MAD_k1.5_mid1':      'cam',
   'CAM_CFAR_k2.5_mid1':     'cam',
 };
-// Render granularity per config — how many 0.1s blocks are one logical decision.
-// A8_05s_bcast is a single 0.5s decision broadcast to 5 blocks → render as 1 cell per 5 blocks.
-// Everything else is a true 0.1s decision → 1 cell per 1 block.
-const PRED_GRANULARITY = {
-  'A8_05s_bcast': 5,
+// Render mode per config:
+//   'block'    = each 0.1s block is one cell (true per-block decisions)
+//   'broadcast'= fixed-G blocks broadcast as one cell (e.g., A8 0.5s = G=5)
+//   'segment'  = merge consecutive identical blocks into one cell of variable
+//                length (segment-classifier configs — actual decision unit is
+//                between detected switches, segments are NOT fixed length)
+const PRED_RENDER_MODE = {
+  'A8_05s_bcast':            ['broadcast', 5],
+  // Segment-based CAM++-only configs (switches detected, label broadcast within segment)
+  'CAM_ttest_k1.5_mid1':     ['segment', 1],
+  'CAM_ttest_k2.5_mid1':     ['segment', 1],
+  'CAM_meanshift_k1.5_mid1': ['segment', 1],
+  'CAM_matched_k2.5_mid1':   ['segment', 1],
+  'CAM_cusum_h2_mid1':       ['segment', 1],
+  'CAM_pelt_med_mid1':       ['segment', 1],
+  'CAM_MAD_k1.5_mid1':       ['segment', 1],
+  'CAM_CFAR_k2.5_mid1':      ['segment', 1],
 };
 
 const PRED_ORDER = [
@@ -415,18 +427,33 @@ function drawTimeline() {
     const baseAlpha = t.isWinner ? 'ee' : 'cc';
     // Background row tint
     svg.innerHTML += `<rect x="${LEFT_PAD}" y="${t.y}" width="${PLOT_W}" height="${t.h}" fill="#0e1217"/>`;
-    // Render at native decision granularity (1 block = 0.1s by default; 5 for A8 broadcast)
-    const G = PRED_GRANULARITY[cfg] || 1;
-    const cellSpan = G * blockW;            // px width of one logical cell
+    // Render at native decision granularity per config
+    const [mode, G] = PRED_RENDER_MODE[cfg] || ['block', 1];
     const GAP = 1.2;
-    const cellW = Math.max(1, cellSpan - GAP);
     let path = '';
-    for (let i=0; i<p.blocks.length; i += G) {
-      // The decision for this G-block chunk is the value at the first index
-      // (for broadcast configs all G blocks share the same value by construction).
-      if (p.blocks[i] === 1) {
-        const bx = LEFT_PAD + i*blockW + GAP/2;
-        path += `M${bx} ${t.y+1} h${cellW} v${t.h-2} h${-cellW} Z`;
+    if (mode === 'segment') {
+      // Merge consecutive same-value runs of 1 into single variable-width cells
+      let i = 0; const N = p.blocks.length;
+      while (i < N) {
+        if (p.blocks[i] === 1) {
+          let j = i;
+          while (j < N && p.blocks[j] === 1) j++;
+          const runSpan = (j - i) * blockW;
+          const cellW   = Math.max(1, runSpan - GAP);
+          const bx      = LEFT_PAD + i*blockW + GAP/2;
+          path += `M${bx} ${t.y+1} h${cellW} v${t.h-2} h${-cellW} Z`;
+          i = j;
+        } else { i++; }
+      }
+    } else {
+      // 'block' or 'broadcast' — chunk by G, decision per chunk = blocks[i] (first index)
+      const cellSpan = G * blockW;
+      const cellW    = Math.max(1, cellSpan - GAP);
+      for (let i=0; i<p.blocks.length; i += G) {
+        if (p.blocks[i] === 1) {
+          const bx = LEFT_PAD + i*blockW + GAP/2;
+          path += `M${bx} ${t.y+1} h${cellW} v${t.h-2} h${-cellW} Z`;
+        }
       }
     }
     svg.innerHTML += `<path d="${path}" fill="${color}${baseAlpha}"/>`;
