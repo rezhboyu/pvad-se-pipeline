@@ -275,6 +275,13 @@ const PRED_CSSCLASS = {
   'CAM_MAD_k1.5_mid1':      'cam',
   'CAM_CFAR_k2.5_mid1':     'cam',
 };
+// Render granularity per config — how many 0.1s blocks are one logical decision.
+// A8_05s_bcast is a single 0.5s decision broadcast to 5 blocks → render as 1 cell per 5 blocks.
+// Everything else is a true 0.1s decision → 1 cell per 1 block.
+const PRED_GRANULARITY = {
+  'A8_05s_bcast': 5,
+};
+
 const PRED_ORDER = [
   // Top hybrid (uses GRU — for context only)
   'FOURVEC_01s_med3',
@@ -408,11 +415,15 @@ function drawTimeline() {
     const baseAlpha = t.isWinner ? 'ee' : 'cc';
     // Background row tint
     svg.innerHTML += `<rect x="${LEFT_PAD}" y="${t.y}" width="${PLOT_W}" height="${t.h}" fill="#0e1217"/>`;
-    // 0/1 blocks rendered at native 0.1s granularity — small gap between cells
-    const GAP = 1.2;                       // px between adjacent blocks
-    const cellW = Math.max(1, blockW - GAP);
+    // Render at native decision granularity (1 block = 0.1s by default; 5 for A8 broadcast)
+    const G = PRED_GRANULARITY[cfg] || 1;
+    const cellSpan = G * blockW;            // px width of one logical cell
+    const GAP = 1.2;
+    const cellW = Math.max(1, cellSpan - GAP);
     let path = '';
-    for (let i=0; i<p.blocks.length; i++) {
+    for (let i=0; i<p.blocks.length; i += G) {
+      // The decision for this G-block chunk is the value at the first index
+      // (for broadcast configs all G blocks share the same value by construction).
       if (p.blocks[i] === 1) {
         const bx = LEFT_PAD + i*blockW + GAP/2;
         path += `M${bx} ${t.y+1} h${cellW} v${t.h-2} h${-cellW} Z`;
