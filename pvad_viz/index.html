@@ -159,7 +159,7 @@ svg{display:block;background:#0a0e13;border-radius:6px}
 
 <header>
 <h1>PVAD 預測疊加可視化 — 真 0.1s decision</h1>
-<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 8 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++-only (A8 broadcast / zero-cross / Viterbi / pure cos+med3 / A8 sliding)。F1 為全域 210-檔 metric。</p>
+<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 9 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++-only (A8 broadcast / <b>t-test+middle ★ 新最佳 CAM++ only</b> / zero-cross / Viterbi / pure cos+med3 / A8 sliding)。F1 為全域 210-檔 metric。</p>
 </header>
 
 <div class="controls">
@@ -208,6 +208,8 @@ const PRED_COLORS = {
   'CAM_zero_cross_cos':     '#22d3ee',  // cyan — zero-crossing of median3(cos)
   'CAM_viterbi_cos':        '#06b6d4',  // teal — 2-state Viterbi
   'CAM_01s_pure_cos_med3':  '#e08a4d',  // same orange as CAM++ family
+  // Newest winner: t-test switch + middle-block mean
+  'CAM_ttest_k1.5_mid1':    '#f0b429',  // gold — best CAM++-only true 0.1s
 };
 const PRED_CSSCLASS_NEW = {
   'CAM_01s_lookahead':  'cam',
@@ -230,6 +232,8 @@ const PRED_LABELS = {
   'CAM_zero_cross_cos':     'CAM++ (zero-cross of median3(cos))',
   'CAM_viterbi_cos':        'CAM++ (2-state Viterbi, min-dwell)',
   'CAM_01s_pure_cos_med3':  'CAM++ (pure cos + median3 thr)',
+  // Newest winner
+  'CAM_ttest_k1.5_mid1':    'CAM++ (t-test switch + middle-mean) ★ best plug-and-play',
 };
 const PRED_CSSCLASS = {
   'FOURVEC_01s_med3':       'fourvec',
@@ -246,6 +250,7 @@ const PRED_CSSCLASS = {
   'CAM_zero_cross_cos':     'cam',
   'CAM_viterbi_cos':        'cam',
   'CAM_01s_pure_cos_med3':  'cam',
+  'CAM_ttest_k1.5_mid1':    'cam',
 };
 const PRED_ORDER = [
   // Top hybrid (uses GRU — for context only)
@@ -254,6 +259,7 @@ const PRED_ORDER = [
   'GRU_01s',
   // CAM++-only (plug-and-play, true 0.1s)
   'A8_05s_bcast',
+  'CAM_ttest_k1.5_mid1',   // newest winner
   'CAM_zero_cross_cos',
   'CAM_viterbi_cos',
   'CAM_01s_pure_cos_med3',
