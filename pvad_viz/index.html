@@ -83,11 +83,83 @@ svg{display:block;background:#0a0e13;border-radius:6px}
   <span class="current-label">當前 ·<b>疊加可視化</b></span>
 </nav>
 <!-- PVAD-TOPNAV-END -->
+<!-- PVAD-COMMONSTYLE-START -->
+<style>
+/* Lightweight beautification layer — uses :where() for zero specificity so
+   it never overrides existing styles, only fills in missing polish. */
+
+/* Smoother transitions everywhere */
+:where(a, button, summary, .card, .deploy-card, .verdict-card,
+       .k, .kpi-row > *, [class*="-card"]) {
+  transition: background-color .15s ease, border-color .15s ease,
+              box-shadow .15s ease, transform .15s ease, color .15s ease;
+}
+
+/* Link hover brightness */
+:where(body) a:hover { filter: brightness(1.18); }
+
+/* Table row hover tint (subtle, picks up site theme accent) */
+:where(table) tbody tr:hover :where(td) {
+  background-color: rgba(88,166,255,.06);
+}
+
+/* Inline code styling */
+:where(p, li, td, h1, h2, h3, h4, h5, div) > :where(code) {
+  background: rgba(140,140,160,.14);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono','Cascadia Code',Consolas,Menlo,monospace;
+  font-size: .92em;
+}
+
+/* Slimmer scrollbars (WebKit / Chromium) */
+:where(*)::-webkit-scrollbar { width: 8px; height: 8px; }
+:where(*)::-webkit-scrollbar-thumb { background: #30363d; border-radius: 4px; }
+:where(*)::-webkit-scrollbar-thumb:hover { background: #484f58; }
+:where(*)::-webkit-scrollbar-track { background: transparent; }
+
+/* Card lift on hover */
+:where(.card, .deploy-card, .verdict-card, .kpi-row > *):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+
+/* Keyboard focus ring */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid #58a6ff;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Heading polish */
+:where(h1, h2) { letter-spacing: -.01em; }
+:where(h1) { font-weight: 700; }
+
+/* Selection */
+::selection { background: #1f6feb; color: #fff; }
+
+/* Optional: improved <details> default for any non-nav details element */
+:where(details:not(.pvad-menu)) > summary { cursor: pointer; }
+
+/* Image lazy fade-in */
+:where(img) { max-width: 100%; height: auto; }
+
+/* Better blockquote (if any page uses) */
+:where(blockquote) {
+  border-left: 3px solid #388bfd;
+  padding: 8px 14px;
+  margin: 10px 0;
+  background: rgba(56,139,253,.06);
+  border-radius: 0 6px 6px 0;
+  color: #c0c8d4;
+}
+</style>
+<!-- PVAD-COMMONSTYLE-END -->
 
 
 <header>
 <h1>PVAD 預測疊加可視化 — 真 0.1s decision</h1>
-<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 6 個方法：4-vec ensemble (winner)、HYB strong、GRU alone、CAM++ sliding、CAM++ pure cos、legacy A8 0.5s broadcast。F1 為全域 210-檔 metric。</p>
+<p class="lead">每個 0.1s 區塊一個決策，無 startup delay。對照 8 個方法：HYBRID (FOURVEC / HYB strong)、GRU alone、CAM++-only (A8 broadcast / zero-cross / Viterbi / pure cos+med3 / A8 sliding)。F1 為全域 210-檔 metric。</p>
 </header>
 
 <div class="controls">
@@ -122,16 +194,20 @@ const LABEL_COLORS = {0:'#21262d', 1:'#3fb950', 2:'#f85149', 3:'#d29922'};
 
 // Per-method color (matches the 0.1s native predictions)
 const PRED_COLORS = {
-  'FOURVEC_01s_med3':   '#3fb950',
-  'HYB_01s_strong_med3':'#7cc46d',
-  'GRU_01s':            '#bc8cff',
-  'CAM_01s_sliding':    '#fb923c',
-  'CAM_01s_pure_cos':   '#e08a4d',
-  'A8_05s_bcast':       '#7d8590',
-  'CAM_01s_lookahead':  '#ffb86c',
-  'GRU_4ms_thr_any':    '#d4a4ff',
-  'GRU_4ms_thr_majority':'#a78bfa',
-  'GRU_4ms_thr_mean':   '#9d7be0',
+  'FOURVEC_01s_med3':       '#3fb950',
+  'HYB_01s_strong_med3':    '#7cc46d',
+  'GRU_01s':                '#bc8cff',
+  'CAM_01s_sliding':        '#fb923c',
+  'CAM_01s_pure_cos':       '#e08a4d',
+  'A8_05s_bcast':           '#7d8590',
+  'CAM_01s_lookahead':      '#ffb86c',
+  'GRU_4ms_thr_any':        '#d4a4ff',
+  'GRU_4ms_thr_majority':   '#a78bfa',
+  'GRU_4ms_thr_mean':       '#9d7be0',
+  // New: gradient-based CAM++-only configs (true 0.1s, plug-and-play)
+  'CAM_zero_cross_cos':     '#22d3ee',  // cyan — zero-crossing of median3(cos)
+  'CAM_viterbi_cos':        '#06b6d4',  // teal — 2-state Viterbi
+  'CAM_01s_pure_cos_med3':  '#e08a4d',  // same orange as CAM++ family
 };
 const PRED_CSSCLASS_NEW = {
   'CAM_01s_lookahead':  'cam',
@@ -140,40 +216,48 @@ const PRED_CSSCLASS_NEW = {
   'GRU_4ms_thr_mean':   'gru',
 };
 const PRED_LABELS = {
-  'FOURVEC_01s_med3':   'HYBRID (FOURVEC + med3)',
-  'HYB_01s_strong_med3':'HYBRID (2*GRU + CAM_A8 + med3)',
-  'GRU_01s':            'GRU (mean over 25 frames + z + thr)',
-  'CAM_01s_sliding':    'CAM++ (A8 sliding 0.3s centered)',
-  'CAM_01s_pure_cos':   'CAM++ (pure cos sliding 0.3s)',
-  'A8_05s_bcast':       'CAM++ (A8 legacy 0.5s broadcast)',
-  'CAM_01s_lookahead':  'CAM++ (A8 asym lookahead 0.3s past + 0.2s future)',
-  'GRU_4ms_thr_any':    'GRU (per-frame thr, any-in-block)',
-  'GRU_4ms_thr_majority':'GRU (per-frame thr, majority-in-block)',
-  'GRU_4ms_thr_mean':   'GRU (per-frame thr, mean-in-block)',
+  'FOURVEC_01s_med3':       'HYBRID (FOURVEC + med3)',
+  'HYB_01s_strong_med3':    'HYBRID (2*GRU + CAM_A8 + med3)',
+  'GRU_01s':                'GRU (mean over 25 frames + z + thr)',
+  'CAM_01s_sliding':        'CAM++ (A8 sliding 0.3s centered)',
+  'CAM_01s_pure_cos':       'CAM++ (pure cos sliding 0.3s)',
+  'A8_05s_bcast':           'CAM++ (A8 0.5s broadcast — assumes 0.5s structure)',
+  'CAM_01s_lookahead':      'CAM++ (A8 asym lookahead)',
+  'GRU_4ms_thr_any':        'GRU (per-frame thr, any-in-block)',
+  'GRU_4ms_thr_majority':   'GRU (per-frame thr, majority-in-block)',
+  'GRU_4ms_thr_mean':       'GRU (per-frame thr, mean-in-block)',
+  // New gradient-based
+  'CAM_zero_cross_cos':     'CAM++ (zero-cross of median3(cos))',
+  'CAM_viterbi_cos':        'CAM++ (2-state Viterbi, min-dwell)',
+  'CAM_01s_pure_cos_med3':  'CAM++ (pure cos + median3 thr)',
 };
 const PRED_CSSCLASS = {
-  'FOURVEC_01s_med3':   'fourvec',
-  'HYB_01s_strong_med3':'hyb',
-  'GRU_01s':            'gru',
-  'CAM_01s_sliding':    'cam',
-  'CAM_01s_pure_cos':   'cam',
-  'A8_05s_bcast':       'legacy',
-  'CAM_01s_lookahead':  'cam',
-  'GRU_4ms_thr_any':    'gru',
-  'GRU_4ms_thr_majority':'gru',
-  'GRU_4ms_thr_mean':   'gru',
+  'FOURVEC_01s_med3':       'fourvec',
+  'HYB_01s_strong_med3':    'hyb',
+  'GRU_01s':                'gru',
+  'CAM_01s_sliding':        'cam',
+  'CAM_01s_pure_cos':       'cam',
+  'A8_05s_bcast':           'legacy',
+  'CAM_01s_lookahead':      'cam',
+  'GRU_4ms_thr_any':        'gru',
+  'GRU_4ms_thr_majority':   'gru',
+  'GRU_4ms_thr_mean':       'gru',
+  // New gradient-based
+  'CAM_zero_cross_cos':     'cam',
+  'CAM_viterbi_cos':        'cam',
+  'CAM_01s_pure_cos_med3':  'cam',
 };
 const PRED_ORDER = [
+  // Top hybrid (uses GRU — for context only)
   'FOURVEC_01s_med3',
   'HYB_01s_strong_med3',
   'GRU_01s',
-  'GRU_4ms_thr_mean',
-  'GRU_4ms_thr_majority',
-  'GRU_4ms_thr_any',
-  'CAM_01s_sliding',
-  'CAM_01s_lookahead',
-  'CAM_01s_pure_cos',
+  // CAM++-only (plug-and-play, true 0.1s)
   'A8_05s_bcast',
+  'CAM_zero_cross_cos',
+  'CAM_viterbi_cos',
+  'CAM_01s_pure_cos_med3',
+  'CAM_01s_sliding',
 ];
 
 let MANIFEST = [];
